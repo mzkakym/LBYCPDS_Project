@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="720.0" prefWidth="1280.0" styleClass="borrower-root"
+            stylesheets="@../../css/borrower.css"
+            xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.example.lbycpds_project.controllers.Borrower_controller">
+
+    <!-- HEADER -->
+    <top>
+        <HBox styleClass="header" spacing="16.0">
+            <VBox spacing="2.0">
+                <Label styleClass="header-title" text="Borrower Dashboard" />
+                <Label fx:id="welcomeLabel" styleClass="header-sub" text="" />
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button onAction="#handleLogout" text="Logout" />
+        </HBox>
+    </top>
+
+    <center>
+        <TabPane fx:id="mainTabs" tabClosingPolicy="UNAVAILABLE">
+
+            <!-- 1. SEARCH ITEMS -->
+            <Tab text="Search Items">
+                <VBox spacing="14.0" styleClass="page">
+                    <Label styleClass="page-heading" text="Search equipment" />
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <Label styleClass="field-name" text="Search by" />
+                        <ComboBox fx:id="searchByBox" prefWidth="130.0" />
+                        <TextField fx:id="keywordField" onAction="#handleSearch" promptText="Enter a keyword or ID" HBox.hgrow="ALWAYS" />
+                        <CheckBox fx:id="onlyAvailableBox" text="Only show available items" />
+                        <Button onAction="#handleSearch" styleClass="primary" text="Search" />
+                    </HBox>
+                    <Label fx:id="searchMessageLabel" text="" />
+                    <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colId" prefWidth="80.0" text="ID" />
+                            <TableColumn fx:id="colName" prefWidth="220.0" text="Name" />
+                            <TableColumn fx:id="colCategory" prefWidth="130.0" text="Category" />
+                            <TableColumn fx:id="colBrand" prefWidth="130.0" text="Brand" />
+                            <TableColumn fx:id="colLocation" prefWidth="120.0" text="Location" />
+                            <TableColumn fx:id="colAvail" prefWidth="100.0" text="Available" />
+                            <TableColumn fx:id="colCondition" prefWidth="110.0" text="Condition" />
+                            <TableColumn fx:id="colStatus" prefWidth="120.0" text="Status" />
+                        </columns>
+                        <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY" /></columnResizePolicy>
+                    </TableView>
+                    <HBox alignment="CENTER_RIGHT">
+                        <Button onAction="#handleRequestSelected" styleClass="primary" text="Request Selected Item" />
+                    </HBox>
+                </VBox>
+            </Tab>
+
+            <!-- 2. CHECK AVAILABILITY -->
+            <Tab text="Check Availability">
+                <VBox spacing="14.0" styleClass="page">
+                    <Label styleClass="page-heading" text="Check availability" />
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <Label styleClass="field-name" text="Equipment name" />
+                        <TextField fx:id="availNameField" onAction="#handleCheckAvailability" prefWidth="260.0" promptText="e.g. Multimeter" />
+                        <Button onAction="#handleCheckAvailability" styleClass="primary" text="Check" />
+                    </HBox>
+                    <Label fx:id="availMessageLabel" text="" />
+                    <GridPane fx:id="availDetails" hgap="28.0" maxWidth="520.0" styleClass="details-card" vgap="10.0">
+                        <Label styleClass="field-name" text="Item" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                        <Label fx:id="availItemLabel" styleClass="field-value" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <Label styleClass="field-name" text="Total" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                        <Label fx:id="availTotalLabel" styleClass="field-value" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Label styleClass="field-name" text="Available" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                        <Label fx:id="availAvailableLabel" styleClass="field-value" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <Label styleClass="field-name" text="Borrowed" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                        <Label fx:id="availBorrowedLabel" styleClass="field-value" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <Label styleClass="field-name" text="Condition" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                        <Label fx:id="availConditionLabel" styleClass="field-value" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                        <Label styleClass="field-name" text="Location" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                        <Label fx:id="availLocationLabel" styleClass="field-value" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                    </GridPane>
+                </VBox>
+            </Tab>
+
+            <!-- 3. REQUEST FOR ITEM -->
+            <Tab fx:id="requestTab" text="Request Item">
+                <VBox spacing="14.0" styleClass="page">
+                    <Label styleClass="page-heading" text="Request an item" />
+                    <Label styleClass="hint" text="If you ask for more than what is available, you can join the reservation queue instead." />
+                    <GridPane hgap="16.0" maxWidth="700.0" vgap="12.0">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="230.0" prefWidth="230.0" />
+                            <ColumnConstraints hgrow="ALWAYS" />
+                        </columnConstraints>
+                        <Label styleClass="field-name" text="Equipment ID" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                        <TextField fx:id="reqIdField" promptText="e.g. E001" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <Label styleClass="field-name" text="Quantity" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                        <TextField fx:id="reqQtyField" promptText="Whole number, at least 1" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Label styleClass="field-name" text="Purpose" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                        <TextField fx:id="reqPurposeField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <Label styleClass="field-name" text="Subject / laboratory activity" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                        <TextField fx:id="reqActivityField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <Label styleClass="field-name" text="Expected return date" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                        <DatePicker fx:id="returnDatePicker" editable="false" prefWidth="260.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                    </GridPane>
+                    <HBox spacing="12.0">
+                        <Button onAction="#handleSubmitRequest" styleClass="primary" text="Submit Request" />
+                        <Button onAction="#handleClearRequestForm" text="Clear" />
+                    </HBox>
+                    <Label fx:id="requestMessageLabel" text="" />
+                </VBox>
+            </Tab>
+
+            <!-- 4. STATUS OF REQUESTS -->
+            <Tab text="My Requests">
+                <VBox spacing="14.0" styleClass="page">
+                    <Label styleClass="page-heading" text="Status of your requests" />
+                    <TableView fx:id="requestsTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colTxn" prefWidth="100.0" text="Transaction" />
+                            <TableColumn fx:id="colReqItem" prefWidth="80.0" text="Item" />
+                            <TableColumn fx:id="colReqQty" prefWidth="60.0" text="Qty" />
+                            <TableColumn fx:id="colReqDate" prefWidth="110.0" text="Requested" />
+                            <TableColumn fx:id="colReqReturn" prefWidth="110.0" text="Return by" />
+                            <TableColumn fx:id="colReqStatus" prefWidth="190.0" text="Status" />
+                            <TableColumn fx:id="colReqRemarks" prefWidth="260.0" text="Remarks" />
+                        </columns>
+                        <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY" /></columnResizePolicy>
+                    </TableView>
+                </VBox>
+            </Tab>
+
+            <!-- 5. RECENT SEARCHES -->
+            <Tab text="Recent Searches">
+                <VBox spacing="14.0" styleClass="page">
+                    <Label styleClass="page-heading" text="Recent searches" />
+                    <Label styleClass="hint" text="Newest first." />
+                    <ListView fx:id="recentList" maxWidth="520.0" VBox.vgrow="ALWAYS" />
+                </VBox>
+            </Tab>
+
+        </TabPane>
+    </center>
+</BorderPane>

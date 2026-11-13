@@ -1,0 +1,10 @@
+FORMAT: userID | password | role | fullname | department | contact | status
+
+
+12402370|password123|BORROWER|Juan Dela Cruz|Computer Engineering|Juan_DelaCruz@gmail.com|VERIFIED
+STAFF001|staff123|STAFF|Pedro Santos|Laboratory Staff|Pedro_Santos@gmail.com|VERIFIED
+ADMIN001|admin123|ADMIN|Maria Reyes|Administration|Maria_Reyes@gmail.com|VERIFIED
+20260002|password123|BORROWER|Ana Cruz|Computer Engineering|Ana_Cruz@gmail.com|PENDING
+1230283|password123|BORROWER|james|CPE|james@gmail.com|PENDING
+
+12404756|testpassword123!|BORROWER|Jude Daniel F. Tungol|Computer Engineering|jude_tungol@dlsu.edu.ph|PENDING

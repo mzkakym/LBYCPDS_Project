@@ -1,0 +1,53 @@
+/* Borrower dashboard: dark base with the DLSU green used on the login screen */
+.borrower-root {
+    -fx-base: #1b2124;
+    -fx-control-inner-background: #20282b;
+    -fx-accent: #1f8a5b;
+    -fx-focus-color: #2fb37a;
+    -fx-faint-focus-color: transparent;
+    -fx-background-color: #14191b;
+    -fx-font-size: 14px;
+}
+
+.header {
+    -fx-background-color: #0e3d2a;
+    -fx-padding: 16 28 16 28;
+    -fx-alignment: center-left;
+}
+.header-title { -fx-text-fill: white; -fx-font-size: 22px; -fx-font-weight: bold; }
+.header-sub   { -fx-text-fill: #b9d9c9; -fx-font-size: 13px; }
+
+.tab-pane > .tab-header-area > .headers-region > .tab { -fx-padding: 6 18 6 18; }
+.tab-label { -fx-font-size: 14px; }
+
+.page { -fx-padding: 24 28 24 28; }
+.page-heading { -fx-text-fill: #e8eeeb; -fx-font-size: 18px; -fx-font-weight: bold; }
+.hint { -fx-text-fill: #8f9d97; }
+.field-name { -fx-text-fill: #9fb0a8; }
+.field-value { -fx-text-fill: #f1f5f3; -fx-font-weight: bold; }
+
+.details-card {
+    -fx-background-color: #20282b;
+    -fx-background-radius: 6;
+    -fx-padding: 18 24 18 24;
+    -fx-border-color: #2c3a36;
+    -fx-border-radius: 6;
+}
+
+.button.primary {
+    -fx-background-color: #1f8a5b;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4;
+    -fx-padding: 8 20 8 20;
+}
+.button.primary:hover { -fx-background-color: #25a06a; }
+
+.msg-ok    { -fx-text-fill: #4cd08a; }
+.msg-error { -fx-text-fill: #ff7b7b; }
+
+.table-view .column-header-background { -fx-background-color: #0e3d2a; }
+.table-view .column-header .label { -fx-text-fill: white; -fx-font-weight: bold; }
+
+.text-field, .combo-box-base, .date-picker { -fx-prompt-text-fill: #7f8d87; }
+.text-field { -fx-text-fill: #f1f5f3; }
