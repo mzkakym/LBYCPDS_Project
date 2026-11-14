@@ -11,6 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.example.lbycpds_project.models.BorrowRequest;
@@ -28,7 +29,7 @@ import java.util.Optional;
 /**
  * JavaFX version of the console BorrowerMenu.
  * Menu 1 -> Search tab, 2 -> Availability tab, 3 -> Request tab,
- * 4 -> My Requests tab, 5 -> Recent Searches tab, 0 -> Logout button.
+ * 4 -> My Requests tab, 0 -> Logout button.
  */
 public class Borrower_controller {
 
@@ -64,11 +65,11 @@ public class Borrower_controller {
     @FXML private Label requestMessageLabel;
 
     // MY REQUESTS TAB
-    @FXML private TableView<BorrowRequest> requestsTable;
-    @FXML private TableColumn<BorrowRequest, String> colTxn, colReqItem, colReqQty,
+    @FXML private TableView<RequestSummary> requestsTable;
+    @FXML private TableColumn<RequestSummary, String> colTxn, colReqItem, colReqQty,
             colReqDate, colReqReturn, colReqStatus, colReqRemarks;
 
-    // RECENT SEARCHES TAB
+    // RECENT SEARCHES
     @FXML private ListView<String> recentList;
 
 
@@ -92,15 +93,19 @@ public class Borrower_controller {
         resultsTable.setPlaceholder(new Label("Run a search to see equipment here."));
 
         // my requests table
-        colTxn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getTxnNo()));
-        colReqItem.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getItemId()));
-        colReqQty.setCellValueFactory(c -> new ReadOnlyStringWrapper(String.valueOf(c.getValue().getQty())));
-        colReqDate.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getRequestDate().toString()));
-        colReqReturn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getExpectedReturn().toString()));
-        colReqStatus.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStatus().toString()));
-        colReqRemarks.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getRemarks()));
+        colTxn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().borrower));
+        colReqItem.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().borrowerId));
+        colReqQty.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().date));
+        colReqDate.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().status));
+        colReqReturn.setVisible(false);
+        colReqRemarks.setVisible(false);
         requestsTable.setPlaceholder(new Label("You have no requests yet."));
+        requestsTable.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2 && requestsTable.getSelectionModel().getSelectedItem() != null)
+                showRequestDetails(requestsTable.getSelectionModel().getSelectedItem());
+        });
 
+        if (recentList == null) recentList = new ListView<>();
         recentList.setPlaceholder(new Label("No recent searches."));
 
         // return date must be after today (same rule as the console version)
@@ -178,6 +183,26 @@ public class Borrower_controller {
             setMsg(searchMessageLabel, results.size() + " item(s) found.", true);
         }
         refreshRecentSearches();
+    }
+
+    @FXML
+    private void handleRecentSearches() {
+        refreshRecentSearches();
+        Button clear = new Button("Clear History");
+        clear.setOnAction(event -> {
+            store.getRecentSearches(user.getUserID()).clear();
+            refreshRecentSearches();
+        });
+        VBox content = new VBox(10, recentList, clear);
+        VBox.setVgrow(recentList, Priority.ALWAYS);
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Recent Searches");
+        dialog.setHeaderText("Recent searches (newest first)");
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dialog.getDialogPane().setPrefSize(420, 360);
+        dialog.showAndWait();
     }
 
     /** Convenience: pick a row in the results and jump to the Request tab with its ID filled in. */
@@ -296,10 +321,11 @@ public class Borrower_controller {
             reserveShortItems = true;
         }
 
+        String requestId = "REQ-" + System.currentTimeMillis();
         int submitted = 0;
         for (RequestItem item : items) {
             boolean reserved = reserveShortItems && shortItems.contains(item);
-            BorrowRequest r = new BorrowRequest(user.getUserID(), item.equipment.getId(), item.qty,
+            BorrowRequest r = new BorrowRequest(requestId, user.getUserID(), item.equipment.getId(), item.qty,
                     purpose, activity, ret, reserved
                     ? BorrowRequest.Status.RESERVED
                     : BorrowRequest.Status.PENDING_STAFF_REVIEW);
@@ -381,17 +407,54 @@ public class Borrower_controller {
         }
     }
 
-    /** 4. Status of requests: only this borrower's requests. */
+    // 4. Status of requests: only this borrower's requests.
     private void refreshMyRequests() {
         if (user == null) return;
-        ObservableList<BorrowRequest> mine = FXCollections.observableArrayList();
+        ObservableList<RequestSummary> mine = FXCollections.observableArrayList();
+        java.util.Map<String, List<BorrowRequest>> grouped = new java.util.LinkedHashMap<>();
         for (BorrowRequest r : store.getAllRequests()) {
-            if (r.getBorrowerId().equals(user.getUserID())) mine.add(r);
+            if (r.getBorrowerId().equals(user.getUserID()))
+                grouped.computeIfAbsent(r.getRequestId(), key -> new ArrayList<>()).add(r);
         }
+        grouped.values().forEach(requests -> mine.add(new RequestSummary(user, requests)));
         requestsTable.setItems(mine);
     }
 
-    /** 5. Recent searches (newest first). */
+    private void showRequestDetails(RequestSummary summary) {
+        TableView<BorrowRequest> details = new TableView<>(FXCollections.observableArrayList(summary.requests));
+        TableColumn<BorrowRequest, String> item = new TableColumn<>("Item");
+        item.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getItemId()));
+        TableColumn<BorrowRequest, String> qty = new TableColumn<>("Quantity");
+        qty.setCellValueFactory(c -> new ReadOnlyStringWrapper(String.valueOf(c.getValue().getQty())));
+        TableColumn<BorrowRequest, String> ret = new TableColumn<>("Return Date");
+        ret.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getExpectedReturn().toString()));
+        TableColumn<BorrowRequest, String> status = new TableColumn<>("Status");
+        status.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStatus().toString()));
+        details.getColumns().addAll(item, qty, ret, status);
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Request Details");
+        dialog.setHeaderText(summary.borrower + " (" + summary.borrowerId + ") - "
+                + summary.date + " - " + summary.status);
+        dialog.getDialogPane().setContent(details);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dialog.getDialogPane().setPrefSize(560, 340);
+        dialog.showAndWait();
+    }
+
+    private static final class RequestSummary {
+        private final String borrower, borrowerId, date, status;
+        private final List<BorrowRequest> requests;
+
+        private RequestSummary(User user, List<BorrowRequest> requests) {
+            this.borrower = user.getFullName();
+            this.borrowerId = user.getUserID();
+            this.date = requests.get(0).getRequestDate().toString();
+            this.status = requests.get(0).getStatus().toString();
+            this.requests = requests;
+        }
+    }
+
+    // 5. Recent searches
     private void refreshRecentSearches() {
         if (user == null) return;
         recentList.setItems(FXCollections.observableArrayList(store.getRecentSearches(user.getUserID())));

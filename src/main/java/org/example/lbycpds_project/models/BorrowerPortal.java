@@ -22,7 +22,7 @@ public class BorrowerPortal extends BorderPane {
     // page names
     private static final String DASH = "Student Dashboard", SEARCH = "Search Items",
             AVAIL = "Check Availability", REQUEST = "Request for Item",
-            STATUS = "Status of Requests", RECENT = "Recent Searches";
+            STATUS = "Status of Requests";
 
     // shared data
     private final String userId, userName;
@@ -56,7 +56,6 @@ public class BorrowerPortal extends BorderPane {
         pages.put(AVAIL, buildAvailability());
         pages.put(REQUEST, buildRequest());
         pages.put(STATUS, buildStatus());
-        pages.put(RECENT, buildRecent());
 
         showPage(DASH);
     }
@@ -89,7 +88,7 @@ public class BorrowerPortal extends BorderPane {
     private Node buildSidebar() {
         VBox nav = new VBox();
         nav.setPadding(new Insets(10, 0, 0, 0));
-        for (String name : new String[]{DASH, SEARCH, AVAIL, REQUEST, STATUS, RECENT}) {
+        for (String name : new String[]{DASH, SEARCH, AVAIL, REQUEST, STATUS}) {
             Button b = new Button(name);
             b.setMaxWidth(Double.MAX_VALUE);
             b.setStyle(navStyle(false));
@@ -180,8 +179,10 @@ public class BorrowerPortal extends BorderPane {
         kw.setPrefWidth(200);
         CheckBox onlyAvail = new CheckBox("Available only");
         Button go = primary("Search");
+        Button recent = new Button("Recent Searches");
+        recent.setOnAction(e -> showRecentSearches());
 
-        HBox row = new HBox(10, new Label("Search by:"), by, new Label("Keyword:"), kw, onlyAvail, go);
+        HBox row = new HBox(10, new Label("Search by:"), by, new Label("Keyword:"), kw, onlyAvail, go, recent);
         row.setAlignment(Pos.CENTER_LEFT);
 
         TableView<List<String>> t = table("ID", "Name", "Category", "Brand", "Location",
@@ -378,9 +379,10 @@ public class BorrowerPortal extends BorderPane {
                     return;
                 }
             }
+            String requestId = "REQ-" + System.currentTimeMillis();
             for (RequestItem item : items) {
                 boolean reserved = reserveShortItems && shortItems.contains(item);
-                BorrowRequest r = new BorrowRequest(userId, item.equipment.getId(), item.qty, p, a, d,
+                BorrowRequest r = new BorrowRequest(requestId, userId, item.equipment.getId(), item.qty, p, a, d,
                         reserved ? BorrowRequest.Status.RESERVED : BorrowRequest.Status.PENDING_STAFF_REVIEW);
                 if (reserved) reservationQueue.offer(r); else staffQueue.offer(r);
                 allRequests.add(r);
@@ -429,32 +431,86 @@ public class BorrowerPortal extends BorderPane {
     }
 
     private Node buildStatus() {
-        TableView<List<String>> t = table("Transaction No.", "Equipment", "Qty", "Requested",
-                "Return By", "Status", "Remarks");
+        TableView<RequestSummary> t = new TableView<>();
+        t.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        t.getColumns().addAll(summaryColumn("Borrower", RequestSummary::borrower),
+                summaryColumn("ID", RequestSummary::borrowerId),
+                summaryColumn("Date Requested", RequestSummary::date),
+                summaryColumn("Status", RequestSummary::status));
+        t.setPlaceholder(new Label("No records to display."));
+        t.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2 && t.getSelectionModel().getSelectedItem() != null)
+                showRequestDetails(t.getSelectionModel().getSelectedItem());
+        });
         VBox c = card("Status of Requests", t);
         VBox.setVgrow(c, Priority.ALWAYS);
         refreshers.put(STATUS, () -> {
-            List<List<String>> rows = new ArrayList<>();
+            Map<String, List<BorrowRequest>> grouped = new LinkedHashMap<>();
             for (BorrowRequest r : myRequests())
-                rows.add(Arrays.asList(r.getTxnNo(), itemName(r.getItemId()), String.valueOf(r.getQty()),
-                        r.getRequestDate().toString(), r.getExpectedReturn().toString(),
-                        pretty(r.getStatus()), r.getRemarks()));
-            t.getItems().setAll(rows);
+                grouped.computeIfAbsent(r.getRequestId(), key -> new ArrayList<>()).add(r);
+            List<RequestSummary> summaries = new ArrayList<>();
+            grouped.forEach((id, requests) -> summaries.add(new RequestSummary(userName, userId, requests)));
+            t.getItems().setAll(summaries);
         });
         return page(c);
     }
 
-    private Node buildRecent() {
+    private TableColumn<RequestSummary, String> summaryColumn(String title,
+                                                               java.util.function.Function<RequestSummary, String> value) {
+        TableColumn<RequestSummary, String> column = new TableColumn<>(title);
+        column.setCellValueFactory(cell -> new SimpleStringProperty(value.apply(cell.getValue())));
+        return column;
+    }
+
+    private void showRequestDetails(RequestSummary summary) {
+        TableView<List<String>> items = table("Item", "Quantity", "Return Date", "Status");
+        for (BorrowRequest r : summary.requests)
+            items.getItems().add(Arrays.asList(itemName(r.getItemId()), String.valueOf(r.getQty()),
+                    r.getExpectedReturn().toString(), pretty(r.getStatus())));
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Request Details");
+        dialog.setHeaderText(summary.borrower + " (" + summary.borrowerId + ") - "
+                + summary.date + " - " + summary.status);
+        dialog.getDialogPane().setContent(items);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dialog.getDialogPane().setPrefSize(620, 360);
+        dialog.showAndWait();
+    }
+
+    private static final class RequestSummary {
+        private final String borrower, borrowerId, date, status;
+        private final List<BorrowRequest> requests;
+
+        private RequestSummary(String borrower, String borrowerId, List<BorrowRequest> requests) {
+            this.borrower = borrower;
+            this.borrowerId = borrowerId;
+            this.requests = requests;
+            this.date = requests.get(0).getRequestDate().toString();
+            this.status = pretty(requests.get(0).getStatus());
+        }
+
+        private String borrower() { return borrower; }
+        private String borrowerId() { return borrowerId; }
+        private String date() { return date; }
+        private String status() { return status; }
+    }
+
+    private void showRecentSearches() {
         ListView<String> list = new ListView<>();
         list.setPlaceholder(new Label("No recent searches."));
         Button clear = new Button("Clear History");
         clear.setOnAction(e -> { recentSearches.clear(); list.getItems().clear(); });
         HBox south = new HBox(clear);
         south.setAlignment(Pos.CENTER_RIGHT);
-        VBox c = card("Recent Searches (most recent first)", list, south);
-        VBox.setVgrow(c, Priority.ALWAYS);
-        refreshers.put(RECENT, () -> list.getItems().setAll(recentSearches));
-        return page(c);
+        list.getItems().setAll(recentSearches);
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Recent Searches");
+        dialog.setHeaderText("Recent Searches (most recent first)");
+        dialog.getDialogPane().setContent(new VBox(10, list, south));
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dialog.getDialogPane().setPrefSize(420, 360);
+        dialog.showAndWait();
     }
 
     // helpers

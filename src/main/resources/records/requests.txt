@@ -1,1 +1,1 @@
-txnNo|borrowerId|itemId|qty|purpose|activity|requestDate|expectedReturn|status|remarks
+txnNo|requestId|borrowerId|itemId|qty|purpose|activity|requestDate|expectedReturn|status|remarks

@@ -47,12 +47,12 @@ public final class Data_Store {
         try {
             ensureRecordsDirectory();
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-                writer.write("txnNo|borrowerId|itemId|qty|purpose|activity|requestDate|expectedReturn|status|remarks");
+                writer.write("txnNo|requestId|borrowerId|itemId|qty|purpose|activity|requestDate|expectedReturn|status|remarks");
                 writer.newLine();
                 for (BorrowRequest r : allRequests) {
-                    writer.write(String.join("|", csv(r.getTxnNo()), csv(r.getBorrowerId()),
-                            csv(r.getItemId()), String.valueOf(r.getQty()), csv(r.getPurpose()),
-                            csv(r.getActivity()), r.getRequestDate().toString(),
+                    writer.write(String.join("|", csv(r.getTxnNo()), csv(r.getRequestId()),
+                            csv(r.getBorrowerId()), csv(r.getItemId()), String.valueOf(r.getQty()),
+                            csv(r.getPurpose()), csv(r.getActivity()), r.getRequestDate().toString(),
                             r.getExpectedReturn().toString(), r.getStatus().name(), csv(r.getRemarks())));
                     writer.newLine();
                 }
@@ -99,10 +99,17 @@ public final class Data_Store {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] d = line.split("\\|", -1);
-                if (d.length != 10 || d[0].equalsIgnoreCase("txnNo")) continue;
-                BorrowRequest r = new BorrowRequest(d[0], d[1], d[2], Integer.parseInt(d[3]),
-                        d[4], d[5], LocalDate.parse(d[6]), LocalDate.parse(d[7]),
-                        BorrowRequest.Status.valueOf(d[8]), d[9]);
+                if (d[0].equalsIgnoreCase("txnNo")) continue;
+                BorrowRequest r;
+                if (d.length == 11) {
+                    r = new BorrowRequest(d[0], d[1], d[2], d[3], Integer.parseInt(d[4]),
+                            d[5], d[6], LocalDate.parse(d[7]), LocalDate.parse(d[8]),
+                            BorrowRequest.Status.valueOf(d[9]), d[10]);
+                } else if (d.length == 10) {
+                    r = new BorrowRequest(d[0], d[1], d[2], Integer.parseInt(d[3]),
+                            d[4], d[5], LocalDate.parse(d[6]), LocalDate.parse(d[7]),
+                            BorrowRequest.Status.valueOf(d[8]), d[9]);
+                } else continue;
                 allRequests.add(r);
                 if (r.getStatus() == BorrowRequest.Status.RESERVED) reservationQueue.offer(r);
                 else if (r.getStatus() == BorrowRequest.Status.PENDING_STAFF_REVIEW) staffQueue.offer(r);

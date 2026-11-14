@@ -34,6 +34,7 @@
                         <TextField fx:id="keywordField" onAction="#handleSearch" promptText="Enter a keyword or ID" HBox.hgrow="ALWAYS" />
                         <CheckBox fx:id="onlyAvailableBox" text="Only show available items" />
                         <Button onAction="#handleSearch" styleClass="primary" text="Search" />
+                        <Button onAction="#handleRecentSearches" text="Recent Searches" />
                     </HBox>
                     <Label fx:id="searchMessageLabel" text="" />
                     <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS">
@@ -114,27 +115,19 @@
             <Tab text="My Requests">
                 <VBox spacing="14.0" styleClass="page">
                     <Label styleClass="page-heading" text="Status of your requests" />
+                    <Label styleClass="hint" text="Double-click a request to view its requested items and return dates." />
                     <TableView fx:id="requestsTable" VBox.vgrow="ALWAYS">
                         <columns>
-                            <TableColumn fx:id="colTxn" prefWidth="100.0" text="Transaction" />
-                            <TableColumn fx:id="colReqItem" prefWidth="80.0" text="Item" />
-                            <TableColumn fx:id="colReqQty" prefWidth="60.0" text="Qty" />
-                            <TableColumn fx:id="colReqDate" prefWidth="110.0" text="Requested" />
-                            <TableColumn fx:id="colReqReturn" prefWidth="110.0" text="Return by" />
-                            <TableColumn fx:id="colReqStatus" prefWidth="190.0" text="Status" />
-                            <TableColumn fx:id="colReqRemarks" prefWidth="260.0" text="Remarks" />
+                            <TableColumn fx:id="colTxn" prefWidth="220.0" text="Borrower" />
+                            <TableColumn fx:id="colReqItem" prefWidth="120.0" text="ID" />
+                            <TableColumn fx:id="colReqQty" prefWidth="130.0" text="Date Requested" />
+                            <TableColumn fx:id="colReqDate" prefWidth="190.0" text="Status" />
+                            <TableColumn fx:id="colReqReturn" visible="false" />
+                            <TableColumn fx:id="colReqStatus" visible="false" />
+                            <TableColumn fx:id="colReqRemarks" visible="false" />
                         </columns>
                         <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY" /></columnResizePolicy>
                     </TableView>
-                </VBox>
-            </Tab>
-
-            <!-- 5. RECENT SEARCHES -->
-            <Tab text="Recent Searches">
-                <VBox spacing="14.0" styleClass="page">
-                    <Label styleClass="page-heading" text="Recent searches" />
-                    <Label styleClass="hint" text="Newest first." />
-                    <ListView fx:id="recentList" maxWidth="520.0" VBox.vgrow="ALWAYS" />
                 </VBox>
             </Tab>
 

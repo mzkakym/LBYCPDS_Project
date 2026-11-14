@@ -7,7 +7,7 @@ public class BorrowRequest {
 
     private static int counter = 1000;
 
-    private final String txnNo, borrowerId, itemId, purpose, activity;
+    private final String txnNo, requestId, borrowerId, itemId, purpose, activity;
     private final int qty;
     private final LocalDate requestDate, expectedReturn;
     private Status status;
@@ -15,14 +15,28 @@ public class BorrowRequest {
 
     public BorrowRequest(String borrowerId, String itemId, int qty, String purpose,
                          String activity, LocalDate expectedReturn, Status status) {
-        this("TXN-" + (++counter), borrowerId, itemId, qty, purpose, activity,
-                LocalDate.now(), expectedReturn, status, "-");
+        this("TXN-" + (++counter), "TXN-" + counter, borrowerId, itemId, qty, purpose,
+                activity, LocalDate.now(), expectedReturn, status, "-");
+    }
+
+    public BorrowRequest(String requestId, String borrowerId, String itemId, int qty,
+                         String purpose, String activity, LocalDate expectedReturn, Status status) {
+        this("TXN-" + (++counter), requestId, borrowerId, itemId, qty, purpose,
+                activity, LocalDate.now(), expectedReturn, status, "-");
     }
 
     public BorrowRequest(String txnNo, String borrowerId, String itemId, int qty,
                          String purpose, String activity, LocalDate requestDate,
                          LocalDate expectedReturn, Status status, String remarks) {
+        this(txnNo, txnNo, borrowerId, itemId, qty, purpose, activity, requestDate,
+                expectedReturn, status, remarks);
+    }
+
+    public BorrowRequest(String txnNo, String requestId, String borrowerId, String itemId, int qty,
+                         String purpose, String activity, LocalDate requestDate,
+                         LocalDate expectedReturn, Status status, String remarks) {
         this.txnNo = txnNo;
+        this.requestId = requestId;
         this.borrowerId = borrowerId; this.itemId = itemId; this.qty = qty;
         this.purpose = purpose; this.activity = activity;
         this.requestDate = requestDate; this.expectedReturn = expectedReturn;
@@ -39,6 +53,7 @@ public class BorrowRequest {
     }
 
     public String getTxnNo() { return txnNo; }
+    public String getRequestId() { return requestId; }
     public String getBorrowerId() { return borrowerId; }
     public String getItemId() { return itemId; }
     public String getPurpose() { return purpose; }
