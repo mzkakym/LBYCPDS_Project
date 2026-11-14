@@ -10,6 +10,8 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.example.lbycpds_project.models.BorrowRequest;
 import org.example.lbycpds_project.models.Equipment;
@@ -55,8 +57,7 @@ public class Borrower_controller {
             availBorrowedLabel, availConditionLabel, availLocationLabel;
 
     // REQUEST TAB
-    @FXML private TextField reqIdField;
-    @FXML private TextField reqQtyField;
+    @FXML private VBox requestItemsBox;
     @FXML private TextField reqPurposeField;
     @FXML private TextField reqActivityField;
     @FXML private DatePicker returnDatePicker;
@@ -76,6 +77,7 @@ public class Borrower_controller {
     public void initialize() {
         searchByBox.setItems(FXCollections.observableArrayList("ID", "Name", "Category", "Brand", "Location"));
         searchByBox.getSelectionModel().select("Name");
+        addRequestItem(null);
 
         // search results table
         colId.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getId()));
@@ -186,7 +188,8 @@ public class Borrower_controller {
             setMsg(searchMessageLabel, "Select an item in the table first.", false);
             return;
         }
-        reqIdField.setText(selected.getId());
+        if (requestItems.isEmpty()) addRequestItem(null);
+        requestItems.get(0).idField.setText(selected.getId());
         mainTabs.getSelectionModel().select(requestTab);
     }
 
@@ -224,26 +227,31 @@ public class Borrower_controller {
     // 3. REQUEST FOR ITEM
     @FXML
     private void handleSubmitRequest() {
-        Equipment e = store.getInventory().get(reqIdField.getText().trim().toUpperCase());
-        if (e == null) {
-            setMsg(requestMessageLabel, "Equipment ID not found.", false);
-            return;
-        }
-        if (e.getStatus().equals("Damaged") || e.getStatus().equals("Missing")
-                || e.getStatus().equals("Under Maintenance")) {
-            setMsg(requestMessageLabel, "This item is currently " + e.getStatus() + " and cannot be requested.", false);
-            return;
-        }
-
-        int qty;
-        try {
-            qty = Integer.parseInt(reqQtyField.getText().trim());
-        } catch (NumberFormatException ex) {
-            qty = -1;
-        }
-        if (qty <= 0) {
-            setMsg(requestMessageLabel, "Quantity must be at least 1.", false);
-            return;
+        List<RequestItem> items = new ArrayList<>();
+        for (RequestItem item : requestItems) {
+            String id = item.idField.getText().trim().toUpperCase();
+            Equipment e = store.getInventory().get(id);
+            if (e == null) {
+                setMsg(requestMessageLabel, "Equipment ID not found: " + id, false);
+                return;
+            }
+            int qty;
+            try {
+                qty = Integer.parseInt(item.qtyField.getText().trim());
+            } catch (NumberFormatException ex) {
+                qty = -1;
+            }
+            if (qty <= 0) {
+                setMsg(requestMessageLabel, "Each quantity must be at least 1.", false);
+                return;
+            }
+            if (e.getStatus().equals("Damaged") || e.getStatus().equals("Missing")
+                    || e.getStatus().equals("Under Maintenance")) {
+                setMsg(requestMessageLabel, "This item is currently " + e.getStatus()
+                        + " and cannot be requested: " + id, false);
+                return;
+            }
+            items.add(new RequestItem(item.idField, item.qtyField, e, qty));
         }
 
         String purpose = reqPurposeField.getText().trim();
@@ -263,37 +271,47 @@ public class Borrower_controller {
             return;
         }
 
-        // not enough stock -> offer the reservation queue
-        if (qty > e.getAvailableQty()) {
+        List<RequestItem> shortItems = items.stream()
+                .filter(item -> item.qty > item.equipment.getAvailableQty())
+                .toList();
+        boolean reserveShortItems = false;
+        if (!shortItems.isEmpty()) {
+            StringBuilder message = new StringBuilder("These items exceed available stock:\n");
+            for (RequestItem item : shortItems) {
+                message.append(item.equipment.getId()).append(" (requested ")
+                        .append(item.qty).append(", available ")
+                        .append(item.equipment.getAvailableQty()).append(")\n");
+            }
+            message.append("\nJoin the reservation queue for these items?");
             Alert ask = new Alert(Alert.AlertType.CONFIRMATION,
-                    "Requested quantity (" + qty + ") exceeds available (" + e.getAvailableQty() + ").\n"
-                            + "Join the reservation queue instead?",
+                    message.toString(),
                     ButtonType.YES, ButtonType.NO);
             ask.setHeaderText("Not enough stock");
             ask.initOwner(mainTabs.getScene().getWindow());
             Optional<ButtonType> answer = ask.showAndWait();
-
-            if (answer.isPresent() && answer.get() == ButtonType.YES) {
-                BorrowRequest r = new BorrowRequest(user.getUserID(), e.getId(), qty, purpose, activity,
-                        ret, BorrowRequest.Status.RESERVED);
-                store.getReservationQueue().offer(r);
-                store.getAllRequests().add(r);
-                setMsg(requestMessageLabel, "Reserved. Transaction no.: " + r.getTxnNo()
-                        + " (position " + store.getReservationQueue().size() + " in queue)", true);
-                clearRequestForm();
-                refreshMyRequests();
-            } else {
+            if (answer.isEmpty() || answer.get() != ButtonType.YES) {
                 setMsg(requestMessageLabel, "Request cancelled.", false);
+                return;
             }
-            return;
+            reserveShortItems = true;
         }
 
-        BorrowRequest r = new BorrowRequest(user.getUserID(), e.getId(), qty, purpose, activity, ret,
-                BorrowRequest.Status.PENDING_STAFF_REVIEW);
-        store.getStaffQueue().offer(r);
-        store.getAllRequests().add(r);
-        setMsg(requestMessageLabel, "Request submitted! Transaction no.: " + r.getTxnNo()
-                + " (Pending Staff Review)", true);
+        int submitted = 0;
+        for (RequestItem item : items) {
+            boolean reserved = reserveShortItems && shortItems.contains(item);
+            BorrowRequest r = new BorrowRequest(user.getUserID(), item.equipment.getId(), item.qty,
+                    purpose, activity, ret, reserved
+                    ? BorrowRequest.Status.RESERVED
+                    : BorrowRequest.Status.PENDING_STAFF_REVIEW);
+            if (reserved) {
+                store.getReservationQueue().offer(r);
+            } else {
+                store.getStaffQueue().offer(r);
+            }
+            store.getAllRequests().add(r);
+            submitted++;
+        }
+        setMsg(requestMessageLabel, submitted + " request(s) submitted.", true);
         clearRequestForm();
         refreshMyRequests();
     }
@@ -322,11 +340,50 @@ public class Borrower_controller {
 
     // HELPERS
     private void clearRequestForm() {
-        reqIdField.clear();
-        reqQtyField.clear();
+        requestItems.clear();
+        requestItemsBox.getChildren().clear();
+        addRequestItem(null);
         reqPurposeField.clear();
         reqActivityField.clear();
         returnDatePicker.setValue(null);
+    }
+
+    @FXML
+    private void handleAddRequestItem() {
+        addRequestItem(null);
+    }
+
+    private final List<RequestItem> requestItems = new ArrayList<>();
+
+    private void addRequestItem(String equipmentId) {
+        TextField idField = new TextField(equipmentId == null ? "" : equipmentId);
+        idField.setPromptText("Equipment ID");
+        TextField qtyField = new TextField();
+        qtyField.setPromptText("Quantity");
+        Button remove = new Button("Remove");
+        RequestItem item = new RequestItem(idField, qtyField, null, 0);
+        remove.setOnAction(event -> {
+            if (requestItems.size() == 1) return;
+            requestItems.remove(item);
+            requestItemsBox.getChildren().remove(remove.getParent());
+        });
+        HBox row = new HBox(8, idField, qtyField, remove);
+        requestItems.add(item);
+        requestItemsBox.getChildren().add(row);
+    }
+
+    private static final class RequestItem {
+        private final TextField idField;
+        private final TextField qtyField;
+        private final Equipment equipment;
+        private final int qty;
+
+        private RequestItem(TextField idField, TextField qtyField, Equipment equipment, int qty) {
+            this.idField = idField;
+            this.qtyField = qtyField;
+            this.equipment = equipment;
+            this.qty = qty;
+        }
     }
 
     /** 4. Status of requests: only this borrower's requests. */

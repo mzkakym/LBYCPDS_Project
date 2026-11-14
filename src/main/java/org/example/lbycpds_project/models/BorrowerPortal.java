@@ -1,8 +1,5 @@
 package org.example.lbycpds_project.models;
 
-import org.example.lbycpds_project.models.BorrowRequest;
-import org.example.lbycpds_project.models.Equipment;
-
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -17,37 +14,31 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-/**
- * Borrower (Student / Faculty) portal in JavaFX, styled after the DLSU student portal.
- * Use it as the root of a Scene:  new Scene(new BorrowerPortal(...), 1200, 720)
- *
- * Data structures: HashMap (inventory by ID), Stack (recent searches),
- *                  Queue (staffQueue for pending requests, reservationQueue).
- */
 public class BorrowerPortal extends BorderPane {
-    // ---- theme ----
+    // theme
     private static final String GREEN = "#006738", SELECT = "#D0E6D9", BG = "#F8F9FC",
             GRAY = "#6E6E6E", LINE = "#E1E1E1";
 
-    // ---- page names ----
+    // page names
     private static final String DASH = "Student Dashboard", SEARCH = "Search Items",
             AVAIL = "Check Availability", REQUEST = "Request for Item",
             STATUS = "Status of Requests", RECENT = "Recent Searches";
 
-    // ---- shared data ----
+    // shared data
     private final String userId, userName;
     private final Map<String, Equipment> inventory;
     private final Queue<BorrowRequest> staffQueue, reservationQueue;
     private final List<BorrowRequest> allRequests;
-    private final Deque<String> recentSearches = new ArrayDeque<>();   // used as a Stack
+    private final Deque<String> recentSearches = new ArrayDeque<>();   // stack
     private final Runnable onLogout;
 
-    // ---- UI plumbing ----
+    // UI setup
     private final Map<String, Button> navButtons = new LinkedHashMap<>();
     private final Map<String, Node> pages = new HashMap<>();
     private final Map<String, Runnable> refreshers = new HashMap<>();
-    private final TextField reqIdField = new TextField();
     private final Label statPending = new Label("0"), statReserved = new Label("0");
+    private final List<RequestItem> requestItems = new ArrayList<>();
+    private VBox requestItemsBox;
 
     public BorrowerPortal(String userId, String userName, Map<String, Equipment> inventory,
                           Queue<BorrowRequest> staffQueue, Queue<BorrowRequest> reservationQueue,
@@ -70,9 +61,7 @@ public class BorrowerPortal extends BorderPane {
         showPage(DASH);
     }
 
-    // =====================================================================
-    //  Frame pieces
-    // =====================================================================
+    // frame
     private Node buildTopBar() {
         Label dlsu = new Label("DLSU");
         dlsu.setStyle("-fx-text-fill:" + GREEN + ";-fx-font-weight:bold;-fx-font-size:16;");
@@ -144,9 +133,7 @@ public class BorrowerPortal extends BorderPane {
         navButtons.forEach((n, b) -> b.setStyle(navStyle(n.equals(name))));
     }
 
-    // =====================================================================
-    //  Pages
-    // =====================================================================
+    // pages
     private Node buildDashboard() {
         Label small = new Label("Welcome, " + userName.toUpperCase());
         small.setStyle("-fx-text-fill:" + GRAY + ";");
@@ -174,7 +161,7 @@ public class BorrowerPortal extends BorderPane {
             statReserved.setText(String.valueOf(mine.stream().filter(r ->
                     r.getStatus() == BorrowRequest.Status.RESERVED).count()));
             List<List<String>> rows = new ArrayList<>();
-            for (int i = mine.size() - 1, n = 0; i >= 0 && n < 5; i--, n++) {   // newest 5
+            for (int i = mine.size() - 1, n = 0; i >= 0 && n < 5; i--, n++) {
                 BorrowRequest r = mine.get(i);
                 rows.add(Arrays.asList(r.getTxnNo(), itemName(r.getItemId()), String.valueOf(r.getQty()),
                         r.getExpectedReturn().toString(), pretty(r.getStatus())));
@@ -209,10 +196,10 @@ public class BorrowerPortal extends BorderPane {
             String k = kw.getText().trim().toLowerCase();
             String mode = by.getValue();
             List<Equipment> res = new ArrayList<>();
-            if (mode.equals("ID") && !k.isEmpty()) {                 // HashMap lookup, O(1) average
+            if (mode.equals("ID") && !k.isEmpty()) {
                 Equipment eq = inventory.get(k.toUpperCase());
                 if (eq != null) res.add(eq);
-            } else {                                                 // linear search, O(n)
+            } else {
                 for (Equipment eq : inventory.values()) {
                     String f;
                     switch (mode) {
@@ -226,9 +213,9 @@ public class BorrowerPortal extends BorderPane {
                 }
             }
             res.removeIf(eq -> onlyAvail.isSelected() && eq.getAvailableQty() == 0);
-            res.sort(Comparator.comparing(Equipment::getName));      // replace with your merge sort later
+            res.sort(Comparator.comparing(Equipment::getName));
 
-            if (!k.isEmpty() && !k.equals(recentSearches.peek())) recentSearches.push(k);  // Stack push
+            if (!k.isEmpty() && !k.equals(recentSearches.peek())) recentSearches.push(k);
 
             List<List<String>> rows = new ArrayList<>();
             for (Equipment eq : res)
@@ -243,10 +230,10 @@ public class BorrowerPortal extends BorderPane {
         req.setOnAction(e -> {
             List<String> sel = t.getSelectionModel().getSelectedItem();
             if (sel == null) { info("Select an item from the table first."); return; }
-            reqIdField.setText(sel.get(0));
+            requestItems.get(0).idField.setText(sel.get(0));
             showPage(REQUEST);
         });
-        refreshers.put(SEARCH, () -> { if (t.getItems().isEmpty()) doSearch.run(); });  // list everything at first
+        refreshers.put(SEARCH, () -> { if (t.getItems().isEmpty()) doSearch.run(); });
 
         return page(card("Search Equipment", row), results);
     }
@@ -311,13 +298,11 @@ public class BorrowerPortal extends BorderPane {
     }
 
     private Node buildRequest() {
-        Spinner<Integer> qty = new Spinner<>(1, 10000, 1);
-        qty.setEditable(true);
         TextField purpose = new TextField();
         TextField activity = new TextField();
         DatePicker ret = new DatePicker(LocalDate.now().plusDays(3));
         ret.setEditable(false);
-        ret.setDayCellFactory(p -> new DateCell() {                   // block today and past dates
+        ret.setDayCellFactory(p -> new DateCell() {                   // block past dates
             @Override public void updateItem(LocalDate d, boolean empty) {
                 super.updateItem(d, empty);
                 setDisable(empty || !d.isAfter(LocalDate.now()));
@@ -332,8 +317,13 @@ public class BorrowerPortal extends BorderPane {
         ColumnConstraints c2 = new ColumnConstraints();
         c2.setHgrow(Priority.ALWAYS);
         form.getColumnConstraints().addAll(c1, c2);
-        addRow(form, 0, "Equipment ID", reqIdField);
-        addRow(form, 1, "Quantity", qty);
+        requestItemsBox = new VBox(8);
+        addRequestItem();
+        Button addItem = new Button("Add equipment");
+        addItem.setOnAction(e -> addRequestItem());
+        form.add(new Label("Equipment items"), 0, 0);
+        form.add(requestItemsBox, 1, 0);
+        form.add(addItem, 1, 1);
         addRow(form, 2, "Purpose", purpose);
         addRow(form, 3, "Subject / Lab Activity", activity);
         addRow(form, 4, "Expected Return Date", ret);
@@ -344,54 +334,92 @@ public class BorrowerPortal extends BorderPane {
         form.add(btns, 1, 5);
 
         Runnable clearForm = () -> {
-            reqIdField.clear(); purpose.clear(); activity.clear();
-            qty.getValueFactory().setValue(1);
+            requestItems.clear();
+            requestItemsBox.getChildren().clear();
+            addRequestItem();
+            purpose.clear(); activity.clear();
             ret.setValue(LocalDate.now().plusDays(3));
         };
         clear.setOnAction(e -> clearForm.run());
 
         submit.setOnAction(e -> {
-            Equipment eq = inventory.get(reqIdField.getText().trim().toUpperCase());
-            if (eq == null) { warn("Equipment ID not found."); return; }
-            String st = eq.getStatus();
-            if (st.equals("Damaged") || st.equals("Missing") || st.equals("Under Maintenance")) {
-                warn("This item is currently " + st + " and cannot be requested."); return;
+            List<RequestItem> items = new ArrayList<>();
+            for (RequestItem item : requestItems) {
+                Equipment eq = inventory.get(item.idField.getText().trim().toUpperCase());
+                if (eq == null) { warn("Equipment ID not found."); return; }
+                int q;
+                try { q = Integer.parseInt(item.qtyField.getText().trim()); }
+                catch (NumberFormatException ex) { q = 0; }
+                if (q <= 0) { warn("Each quantity must be at least 1."); return; }
+                String st = eq.getStatus();
+                if (st.equals("Damaged") || st.equals("Missing") || st.equals("Under Maintenance")) {
+                    warn("This item is currently " + st + " and cannot be requested."); return;
+                }
+                items.add(new RequestItem(item.idField, item.qtyField, eq, q));
             }
-            try { qty.increment(0); } catch (Exception ignored) { }   // commits typed text
-            int q = qty.getValue() == null ? 0 : qty.getValue();
-            if (q <= 0) { warn("Quantity must be at least 1."); return; }
             String p = purpose.getText().trim(), a = activity.getText().trim();
             if (p.isEmpty() || a.isEmpty()) { warn("Purpose and subject/activity are required."); return; }
             LocalDate d = ret.getValue();
             if (d == null) { warn("Please choose an expected return date."); return; }
             if (!d.isAfter(LocalDate.now())) { warn("Return date must be after today."); return; }
 
-            if (q > eq.getAvailableQty()) {
+            List<RequestItem> shortItems = items.stream()
+                    .filter(item -> item.qty > item.equipment.getAvailableQty())
+                    .toList();
+            boolean reserveShortItems = false;
+            if (!shortItems.isEmpty()) {
                 Alert ask = new Alert(Alert.AlertType.CONFIRMATION,
-                        "Requested quantity (" + q + ") exceeds available (" + eq.getAvailableQty() + ").\n"
-                                + "Join the reservation queue instead?", ButtonType.YES, ButtonType.NO);
+                        "One or more items exceed available stock.\n"
+                                + "Join the reservation queue for those items?", ButtonType.YES, ButtonType.NO);
                 ask.setHeaderText("Not enough stock");
                 if (ask.showAndWait().filter(b -> b == ButtonType.YES).isPresent()) {
-                    BorrowRequest r = new BorrowRequest(userId, eq.getId(), q, p, a, d, BorrowRequest.Status.RESERVED);
-                    reservationQueue.offer(r);                       // Queue enqueue, O(1)
-                    allRequests.add(r);
-                    info("Reserved!\nTransaction no.: " + r.getTxnNo()
-                            + "\nQueue position: " + reservationQueue.size());
-                    clearForm.run();
-                    showPage(STATUS);
+                    reserveShortItems = true;
+                } else {
+                    return;
                 }
-                return;
             }
-            BorrowRequest r = new BorrowRequest(userId, eq.getId(), q, p, a, d,
-                    BorrowRequest.Status.PENDING_STAFF_REVIEW);
-            staffQueue.offer(r);                                     // Queue enqueue, O(1)
-            allRequests.add(r);
-            info("Request submitted!\nTransaction no.: " + r.getTxnNo() + "\nStatus: Pending Staff Review");
+            for (RequestItem item : items) {
+                boolean reserved = reserveShortItems && shortItems.contains(item);
+                BorrowRequest r = new BorrowRequest(userId, item.equipment.getId(), item.qty, p, a, d,
+                        reserved ? BorrowRequest.Status.RESERVED : BorrowRequest.Status.PENDING_STAFF_REVIEW);
+                if (reserved) reservationQueue.offer(r); else staffQueue.offer(r);
+                allRequests.add(r);
+            }
+            info("Request submitted for " + items.size() + " equipment item(s).");
             clearForm.run();
             showPage(STATUS);
         });
 
         return page(card("Request for Item", form));
+    }
+
+    private void addRequestItem() {
+        TextField idField = new TextField();
+        idField.setPromptText("Equipment ID");
+        TextField qtyField = new TextField();
+        qtyField.setPromptText("Quantity");
+        Button remove = new Button("Remove");
+        RequestItem item = new RequestItem(idField, qtyField, null, 0);
+        remove.setOnAction(e -> {
+            if (requestItems.size() == 1) return;
+            requestItems.remove(item);
+            requestItemsBox.getChildren().remove(remove.getParent());
+        });
+        requestItems.add(item);
+        requestItemsBox.getChildren().add(new HBox(8, idField, qtyField, remove));
+    }
+
+    private static final class RequestItem {
+        private final TextField idField, qtyField;
+        private final Equipment equipment;
+        private final int qty;
+
+        private RequestItem(TextField idField, TextField qtyField, Equipment equipment, int qty) {
+            this.idField = idField;
+            this.qtyField = qtyField;
+            this.equipment = equipment;
+            this.qty = qty;
+        }
     }
 
     private Node buildStatus() {
@@ -419,13 +447,11 @@ public class BorrowerPortal extends BorderPane {
         south.setAlignment(Pos.CENTER_RIGHT);
         VBox c = card("Recent Searches (most recent first)", list, south);
         VBox.setVgrow(c, Priority.ALWAYS);
-        refreshers.put(RECENT, () -> list.getItems().setAll(recentSearches));  // iterates top of stack -> bottom
+        refreshers.put(RECENT, () -> list.getItems().setAll(recentSearches));
         return page(c);
     }
 
-    // =====================================================================
-    //  Helpers
-    // =====================================================================
+    // helpers
     private List<BorrowRequest> myRequests() {
         List<BorrowRequest> mine = new ArrayList<>();
         for (BorrowRequest r : allRequests) if (r.getBorrowerId().equals(userId)) mine.add(r);

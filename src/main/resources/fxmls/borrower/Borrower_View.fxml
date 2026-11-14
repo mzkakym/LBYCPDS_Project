@@ -86,16 +86,15 @@
             <Tab fx:id="requestTab" text="Request Item">
                 <VBox spacing="14.0" styleClass="page">
                     <Label styleClass="page-heading" text="Request an item" />
-                    <Label styleClass="hint" text="If you ask for more than what is available, you can join the reservation queue instead." />
+                    <Label styleClass="hint" text="Add one or more equipment items. If an item exceeds available stock, you can join the reservation queue." />
                     <GridPane hgap="16.0" maxWidth="700.0" vgap="12.0">
                         <columnConstraints>
                             <ColumnConstraints minWidth="230.0" prefWidth="230.0" />
                             <ColumnConstraints hgrow="ALWAYS" />
                         </columnConstraints>
-                        <Label styleClass="field-name" text="Equipment ID" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                        <TextField fx:id="reqIdField" promptText="e.g. E001" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                        <Label styleClass="field-name" text="Quantity" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                        <TextField fx:id="reqQtyField" promptText="Whole number, at least 1" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Label styleClass="field-name" text="Equipment items" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                        <VBox fx:id="requestItemsBox" spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <Button onAction="#handleAddRequestItem" text="Add equipment" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                         <Label styleClass="field-name" text="Purpose" GridPane.columnIndex="0" GridPane.rowIndex="2" />
                         <TextField fx:id="reqPurposeField" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                         <Label styleClass="field-name" text="Subject / laboratory activity" GridPane.columnIndex="0" GridPane.rowIndex="3" />
