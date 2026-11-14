@@ -102,11 +102,3 @@ These records include:
 - Other application-related records
 
 This approach allows different parts of the system to access and update shared information while maintaining consistency between user accounts, equipment records, and transactions.
-
-## Development Team
-
-Developed by the LBYCPDS project team as part of the Computer Engineering curriculum at De La Salle University.
-
-## License
-
-This project is intended for academic purposes.
