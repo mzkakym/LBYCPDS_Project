@@ -30,6 +30,45 @@ public class Equipment {
     public int getAvailableQty() { return availableQty; }
     public int getBorrowedQty() { return totalQty - availableQty; }
 
+    public void setName(String name){
+        this.name = name;
+    }
+
+    public void setCategory(String category){
+        this.category = category;
+    }
+
+    public void setBrand(String name){
+        this.brand = brand;
+    }
+
+    public void setLocation(String location){
+        this.location = location;
+    }
+
+    public void setCondition(String condition){
+        this.condition = condition;
+    }
+
+    public void setStatus(String status){
+        this.status = status;
+        if (!status.equals("Damaged") &&
+                !status.equals("Missing") &&
+                !status.equals("Under Maintenance")){
+            this.status = (availableQty == 0) ? "Borrowed" : "Available";
+        }
+    }
+
+    public void setTotalQty(int newTotal){
+        int borrowed = getBorrowedQty();
+        if (newTotal < borrowed){
+            throw new IllegalArgumentException("Total quantity cannot be less than currently borrowed (" + borrowed + ").");
+        }
+        this.totalQty = newTotal;
+        setAvailableQty(newTotal - borrowed);
+
+    }
+
     public void setAvailableQty(int q) {
         if (q < 0 || q > totalQty) {
             throw new IllegalArgumentException("Invalid quantity");
