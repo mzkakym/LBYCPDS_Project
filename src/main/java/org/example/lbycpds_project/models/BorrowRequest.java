@@ -15,11 +15,27 @@ public class BorrowRequest {
 
     public BorrowRequest(String borrowerId, String itemId, int qty, String purpose,
                          String activity, LocalDate expectedReturn, Status status) {
-        this.txnNo = "TXN-" + (++counter);
+        this("TXN-" + (++counter), borrowerId, itemId, qty, purpose, activity,
+                LocalDate.now(), expectedReturn, status, "-");
+    }
+
+    public BorrowRequest(String txnNo, String borrowerId, String itemId, int qty,
+                         String purpose, String activity, LocalDate requestDate,
+                         LocalDate expectedReturn, Status status, String remarks) {
+        this.txnNo = txnNo;
         this.borrowerId = borrowerId; this.itemId = itemId; this.qty = qty;
         this.purpose = purpose; this.activity = activity;
-        this.requestDate = LocalDate.now(); this.expectedReturn = expectedReturn;
+        this.requestDate = requestDate; this.expectedReturn = expectedReturn;
         this.status = status;
+        this.remarks = remarks;
+        updateCounter(txnNo);
+    }
+
+    private static void updateCounter(String txnNo) {
+        if (txnNo.startsWith("TXN-")) {
+            try { counter = Math.max(counter, Integer.parseInt(txnNo.substring(4))); }
+            catch (NumberFormatException ignored) { }
+        }
     }
 
     public String getTxnNo() { return txnNo; }

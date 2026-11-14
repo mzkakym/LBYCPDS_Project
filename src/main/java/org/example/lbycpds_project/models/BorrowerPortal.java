@@ -385,6 +385,7 @@ public class BorrowerPortal extends BorderPane {
                 if (reserved) reservationQueue.offer(r); else staffQueue.offer(r);
                 allRequests.add(r);
             }
+            saveRequests();
             info("Request submitted for " + items.size() + " equipment item(s).");
             clearForm.run();
             showPage(STATUS);
@@ -420,6 +421,11 @@ public class BorrowerPortal extends BorderPane {
             this.equipment = equipment;
             this.qty = qty;
         }
+
+    }
+
+    private void saveRequests() {
+        org.example.lbycpds_project.utils.Data_Store.getInstance().saveRequests();
     }
 
     private Node buildStatus() {

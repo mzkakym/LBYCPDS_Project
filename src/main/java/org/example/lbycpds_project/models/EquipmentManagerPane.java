@@ -264,6 +264,7 @@ public class EquipmentManagerPane extends VBox {
             Equipment created = new Equipment(id, name, category, brand, totalQty, location, condition);
             created.setStatus(status);
             inventory.put(id, created);
+            Data_Store.getInstance().saveEquipment();
             alert(Alert.AlertType.INFORMATION, "Item Added", name + " (" + id + ") has been added to inventory.");
         } else {
             // EDIT EXISTING ITEM
@@ -281,6 +282,7 @@ public class EquipmentManagerPane extends VBox {
             existing.setLocation(location);
             existing.setCondition(condition);
             existing.setStatus(status);
+            Data_Store.getInstance().saveEquipment();
             alert(Alert.AlertType.INFORMATION, "Item Updated", name + " (" + id + ") has been updated.");
         }
 
@@ -324,6 +326,7 @@ public class EquipmentManagerPane extends VBox {
         confirm.setHeaderText("Confirm Deletion");
         if (confirm.showAndWait().filter(b -> b == ButtonType.YES).isPresent()) {
             inventory.remove(id);
+            Data_Store.getInstance().saveEquipment();
             if (editMode && idField.getText().equalsIgnoreCase(id)) {
                 switchToAddMode();
             }

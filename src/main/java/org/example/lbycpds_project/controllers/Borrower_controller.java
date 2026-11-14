@@ -303,12 +303,7 @@ public class Borrower_controller {
                     purpose, activity, ret, reserved
                     ? BorrowRequest.Status.RESERVED
                     : BorrowRequest.Status.PENDING_STAFF_REVIEW);
-            if (reserved) {
-                store.getReservationQueue().offer(r);
-            } else {
-                store.getStaffQueue().offer(r);
-            }
-            store.getAllRequests().add(r);
+            store.addRequest(r);
             submitted++;
         }
         setMsg(requestMessageLabel, submitted + " request(s) submitted.", true);
