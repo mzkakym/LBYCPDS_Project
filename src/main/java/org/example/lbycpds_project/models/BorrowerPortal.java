@@ -239,64 +239,156 @@ public class BorrowerPortal extends BorderPane {
         return page(card("Search Equipment", row), results);
     }
 
+
     private Node buildAvailability() {
+
         TextField name = new TextField();
         name.setPromptText("e.g. Multimeter");
+
         Button check = primary("Check");
+
         Label msg = new Label();
         msg.setStyle("-fx-text-fill:#DC3545;");
-        HBox row = new HBox(10, new Label("Equipment name:"), name, check, msg);
+
+        HBox row = new HBox(10,
+                new Label("Equipment name:"), name, check, msg);
         row.setAlignment(Pos.CENTER_LEFT);
 
-        Label total = new Label("-"), avail = new Label("-"), borrowed = new Label("-");
+        // SUMMARY STATISTICS
+        Label total = new Label("-");
+        Label avail = new Label("-");
+        Label borrowed = new Label("-");
+
         HBox stats = new HBox(12,
                 statCard(total, "Total Quantity", GREEN),
                 statCard(avail, "Quantity Available", "#6E9F2F"),
-                statCard(borrowed, "Currently Borrowed", "#FF8C00"));
+                statCard(borrowed, "Currently Borrowed", "#FF8C00")
+        );
 
+        // EQUIPMENT DETAILS TABLE
         GridPane details = new GridPane();
-        details.setHgap(24);
-        details.setVgap(8);
-        details.add(new Label("Enter an equipment name to see its details."), 0, 0);
+        details.setHgap(18);
+        details.setVgap(12);
+
         VBox detailCard = card("Equipment Details", details);
         VBox.setVgrow(detailCard, Priority.ALWAYS);
 
+        // SEARCH FUNCTION
         Runnable doCheck = () -> {
+
             details.getChildren().clear();
+
             String query = name.getText().trim();
-            Equipment eq = query.isEmpty() ? null : inventory.values().stream()
-                    .filter(item -> item.getName().equalsIgnoreCase(query))
-                    .findFirst()
-                    .orElseGet(() -> inventory.values().stream()
-                            .filter(item -> item.getName().toLowerCase(Locale.ROOT)
-                                    .contains(query.toLowerCase(Locale.ROOT)))
-                            .findFirst()
-                            .orElse(null));
-            if (eq == null) {
+
+            List<Equipment> matches = new ArrayList<>();
+
+            // Find all exact name matches first
+            if (!query.isEmpty()) {
+
+                for (Equipment item : inventory.values()) {
+
+                    if (item.getName().equalsIgnoreCase(query)) {
+                        matches.add(item);
+                    }
+                }
+
+                // If no exact match, search using partial names
+                if (matches.isEmpty()) {
+
+                    for (Equipment item : inventory.values()) {
+
+                        if (item.getName().toLowerCase(Locale.ROOT)
+                                .contains(query.toLowerCase(Locale.ROOT))) {
+                            matches.add(item);
+                        }
+                    }
+                }
+            }
+
+            // No matching equipment
+            if (matches.isEmpty()) {
+
                 msg.setText("Equipment name not found.");
-                total.setText("-"); avail.setText("-"); borrowed.setText("-");
+
+                total.setText("-");
+                avail.setText("-");
+                borrowed.setText("-");
+
+                details.add(
+                        new Label("No matching equipment found."),
+                        0, 0
+                );
+
                 return;
             }
-            msg.setText("");
-            total.setText(String.valueOf(eq.getTotalQty()));
-            avail.setText(String.valueOf(eq.getAvailableQty()));
-            borrowed.setText(String.valueOf(eq.getBorrowedQty()));
-            String[][] rows = {{"Name", eq.getName()}, {"Brand / Model", eq.getBrand()},
-                    {"Category", eq.getCategory()},
-                    {"Storage Location", eq.getLocation()}, {"Condition", eq.getCondition()},
-                    {"Status", eq.getStatus()}};
-            for (int i = 0; i < rows.length; i++) {
-                Label key = new Label(rows[i][0]);
-                key.setStyle("-fx-font-weight:bold;");
-                details.add(key, 0, i);
-                details.add(new Label(rows[i][1]), 1, i);
+
+            // Sort by brand
+            matches.sort(
+                    Comparator.comparing(Equipment::getBrand,
+                            String.CASE_INSENSITIVE_ORDER)
+            );
+
+            msg.setStyle("-fx-text-fill:#006738;");
+            msg.setText(matches.size() + " brand(s) found.");
+
+            // Calculate combined quantities
+            int totalQty = 0;
+            int availableQty = 0;
+            int borrowedQty = 0;
+
+            for (Equipment item : matches) {
+
+                totalQty += item.getTotalQty();
+                availableQty += item.getAvailableQty();
+                borrowedQty += item.getBorrowedQty();
+            }
+
+            total.setText(String.valueOf(totalQty));
+            avail.setText(String.valueOf(availableQty));
+            borrowed.setText(String.valueOf(borrowedQty));
+
+            // TABLE HEADERS
+            String[] headers = {
+                    "ID", "Brand / Model", "Total", "Available",
+                    "Borrowed", "Condition", "Location", "Status"
+            };
+
+            for (int col = 0; col < headers.length; col++) {
+
+                Label header = new Label(headers[col]);
+                header.setStyle("-fx-font-weight:bold;");
+
+                details.add(header, col, 0);
+            }
+
+            // DISPLAY EVERY MATCHING BRAND
+            int tableRow = 1;
+
+            for (Equipment item : matches) {
+
+                details.add(new Label(item.getId()), 0, tableRow);
+                details.add(new Label(item.getBrand()), 1, tableRow);
+                details.add(new Label(String.valueOf(item.getTotalQty())), 2, tableRow);
+                details.add(new Label(String.valueOf(item.getAvailableQty())), 3, tableRow);
+                details.add(new Label(String.valueOf(item.getBorrowedQty())), 4, tableRow);
+                details.add(new Label(item.getCondition()), 5, tableRow);
+                details.add(new Label(item.getLocation()), 6, tableRow);
+                details.add(new Label(item.getStatus()), 7, tableRow);
+
+                tableRow++;
             }
         };
+
         check.setOnAction(e -> doCheck.run());
         name.setOnAction(e -> doCheck.run());
 
-        return page(card("Check Availability", row), stats, detailCard);
+        return page(
+                card("Check Availability", row),
+                stats,
+                detailCard
+        );
     }
+
 
     private Node buildRequest() {
         TextField purpose = new TextField();

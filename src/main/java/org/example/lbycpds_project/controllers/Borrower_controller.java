@@ -53,9 +53,16 @@ public class Borrower_controller {
     // AVAILABILITY TAB
     @FXML private TextField availNameField;
     @FXML private Label availMessageLabel;
-    @FXML private GridPane availDetails;
-    @FXML private Label availItemLabel, availTotalLabel, availAvailableLabel,
-            availBorrowedLabel, availConditionLabel, availLocationLabel;
+    @FXML private TableView<Equipment> availabilityTable;
+    @FXML private TableColumn<Equipment, String> availColId;
+    @FXML private TableColumn<Equipment, String> availColName;
+    @FXML private TableColumn<Equipment, String> availColBrand;
+    @FXML private TableColumn<Equipment, String> availColTotal;
+    @FXML private TableColumn<Equipment, String> availColAvailable;
+    @FXML private TableColumn<Equipment, String> availColBorrowed;
+    @FXML private TableColumn<Equipment, String> availColCondition;
+    @FXML private TableColumn<Equipment, String> availColLocation;
+    @FXML private TableColumn<Equipment, String> availColStatus;
 
     // REQUEST TAB
     @FXML private VBox requestItemsBox;
@@ -92,6 +99,38 @@ public class Borrower_controller {
         colStatus.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStatus()));
         resultsTable.setPlaceholder(new Label("Run a search to see equipment here."));
 
+        // availability table
+        availColId.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(c.getValue().getId()));
+
+        availColName.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(c.getValue().getName()));
+
+        availColBrand.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(c.getValue().getBrand()));
+
+        availColTotal.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(String.valueOf(c.getValue().getTotalQty())));
+
+        availColAvailable.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(String.valueOf(c.getValue().getAvailableQty())));
+
+        availColBorrowed.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(String.valueOf(c.getValue().getBorrowedQty())));
+
+        availColCondition.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(c.getValue().getCondition()));
+
+        availColLocation.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(c.getValue().getLocation()));
+
+        availColStatus.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(c.getValue().getStatus()));
+
+        availabilityTable.setPlaceholder(
+                new Label("Search for an equipment name to check availability.")
+        );
+
         // my requests table
         colTxn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().borrower));
         colReqItem.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().borrowerId));
@@ -122,9 +161,6 @@ public class Borrower_controller {
             refreshMyRequests();
             refreshRecentSearches();
         });
-
-        availDetails.setVisible(false);
-        availDetails.setManaged(false);
     }
 
     /** Called by Login_controller right after a successful login. */
@@ -222,30 +258,43 @@ public class Borrower_controller {
     // 2. CHECK AVAILABILITY
     @FXML
     private void handleCheckAvailability() {
+
         String query = availNameField.getText().trim();
-        Equipment e = query.isEmpty() ? null : store.getInventory().values().stream()
-                .filter(item -> item.getName().equalsIgnoreCase(query))
-                .findFirst()
-                .orElseGet(() -> store.getInventory().values().stream()
-                        .filter(item -> item.getName().toLowerCase().contains(query.toLowerCase()))
-                        .findFirst()
-                        .orElse(null));
-        if (e == null) {
-            availDetails.setVisible(false);
-            availDetails.setManaged(false);
-            setMsg(availMessageLabel, "Equipment name not found.", false);
+
+        if (query.isEmpty()) {
+            availabilityTable.getItems().clear();
+            setMsg(availMessageLabel, "Please enter an equipment name.", false);
             return;
         }
 
-        availMessageLabel.setText("");
-        availItemLabel.setText(e.getName() + " (" + e.getBrand() + ")");
-        availTotalLabel.setText(String.valueOf(e.getTotalQty()));
-        availAvailableLabel.setText(String.valueOf(e.getAvailableQty()));
-        availBorrowedLabel.setText(String.valueOf(e.getBorrowedQty()));
-        availConditionLabel.setText(e.getCondition() + "  |  Status: " + e.getStatus());
-        availLocationLabel.setText(e.getLocation());
-        availDetails.setVisible(true);
-        availDetails.setManaged(true);
+        List<Equipment> results = new ArrayList<>();
+
+        // Search for all matching equipment names
+        for (Equipment item : store.getInventory().values()) {
+
+            if (item.getName().toLowerCase().contains(query.toLowerCase())) {
+                results.add(item);
+            }
+        }
+
+        // Sort by name, then brand
+        results.sort(
+                Comparator.comparing(Equipment::getName)
+                        .thenComparing(Equipment::getBrand)
+        );
+
+        // Display all matching records
+        availabilityTable.setItems(
+                FXCollections.observableArrayList(results)
+        );
+
+        if (results.isEmpty()) {
+            setMsg(availMessageLabel, "Equipment name not found.", false);
+        } else {
+            setMsg(availMessageLabel,
+                    results.size() + " matching equipment record(s) found.",
+                    true);
+        }
     }
 
 
