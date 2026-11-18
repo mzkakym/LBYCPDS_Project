@@ -8,6 +8,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 
@@ -92,4 +93,68 @@ public class User_File {
         }
     }
 
+    // GET ALL USER ACCOUNTS (for admin)
+    public static List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                String[] data = line.split("\\|", -1);
+                if (data.length != 7) {
+                    continue;
+                }
+                users.add(new User(
+                        data[0].trim(),
+                        data[1].trim(),
+                        data[2].trim(),
+                        data[3].trim(),
+                        data[4].trim(),
+                        data[5].trim(),
+                        data[6].trim()
+                ));
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading users.txt: " + e.getMessage());
+        }
+        return users;
+    }
+
+    // UPDATE ACCOUNT STATUS
+    public static boolean updateStatus(String userID, String newStatus) {
+        List<String> records = new ArrayList<>();
+        boolean found = false;
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split("\\|", -1);
+                if (data.length == 7 && data[0].trim().equalsIgnoreCase(userID)) {
+                    data[6] = newStatus;
+                    line = String.join("|", data);
+                    found = true;
+                }
+                records.add(line);
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading users.txt: " + e.getMessage());
+            return false;
+        }
+
+        if (!found) {
+            return false;
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (String record : records) {
+                writer.write(record);
+                writer.newLine();
+            }
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error updating users.txt: " + e.getMessage());
+            return false;
+        }
+    }
 }

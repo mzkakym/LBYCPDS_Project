@@ -1,0 +1,11 @@
+id|name|category|brand|totalQty|location|condition|availableQty|status
+C002|Jumper Wires|Component|Generic|3|Drawer B2|New|3|Available
+E005|Audio Generator|Instrument|Fluke|5|Shelf A4|Good|5|Available
+C001|10k Resistor|Component|Yageo|200|Drawer B1|Fair|200|Available
+E001|Oscilloscope|Instrument|Tektronix|5|Shelf A1|Good|5|Available
+E002|Digital Multimeter|Instrument|Fluke|10|Shelf A2|Good|10|Available
+C005|Transistor|Component|Fairchild|40|Drawer B5|Fair|40|Available
+E003|Oscilloscope|Instrument|Siglent|4|Shelf A3|Good|4|Available
+C004|Transistor|Component|ON Semiconductor|50|Drawer B4|New|50|Available
+E004|Digital Multimeter|Instrument|Keysight|6|Shelf A4|Good|6|Available
+C003|10k Resistor|Component|Vishay|150|Drawer B3|New|150|Available

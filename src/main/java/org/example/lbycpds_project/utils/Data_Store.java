@@ -12,16 +12,19 @@ public final class Data_Store {
     private static final String RECORDS_DIR = "src/main/resources/records";
     private static final String EQUIPMENT_FILE = RECORDS_DIR + "/equipment.txt";
     private static final String REQUESTS_FILE = RECORDS_DIR + "/requests.txt";
+    private static final String AUDIT_FILE = RECORDS_DIR + "/audit_log.txt";
 
     private final Map<String, Equipment> inventory = new HashMap<>();
     private final Queue<BorrowRequest> staffQueue = new LinkedList<>();
     private final Queue<BorrowRequest> reservationQueue = new LinkedList<>();
     private final List<BorrowRequest> allRequests = new ArrayList<>();
     private final Map<String, Deque<String>> recentSearches = new HashMap<>();
+    private final List<String> auditLogs = new ArrayList<>();
 
     private Data_Store() {
         loadEquipment();
         loadRequests();
+        loadAuditLogs();
     }
 
     public static Data_Store getInstance() { return INSTANCE; }
@@ -151,5 +154,58 @@ public final class Data_Store {
     /** Newest search first, one history per user. */
     public Deque<String> getRecentSearches(String userId) {
         return recentSearches.computeIfAbsent(userId, k -> new ArrayDeque<>());
+    }
+
+
+    // STAFF ACTIVITY LOGGER
+    public List<String> getAuditLogs() {
+        return Collections.unmodifiableList(auditLogs);
+    }
+
+    public void recordActivity(String staffID, String action, String txnNo, String details) {
+        String date = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String record = date + "|" + cleanLog(staffID) + "|" + cleanLog(action) + "|" + cleanLog(txnNo) + "|" + cleanLog(details);
+        auditLogs.add(record);
+        saveAuditLogs();
+    }
+
+    private void loadAuditLogs() {
+        File file = new File(AUDIT_FILE);
+        if (!file.exists()) {
+            return;
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.startsWith("Date|") && !line.trim().isEmpty()) {
+                    auditLogs.add(line);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading audit logs: " + e.getMessage());
+        }
+    }
+
+    private void saveAuditLogs() {
+        try {
+            ensureRecordsDirectory();
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(AUDIT_FILE))) {
+                writer.write("Date|Staff ID|Action|Transaction No.|Details");
+                writer.newLine();
+                for (String log : auditLogs) {
+                    writer.write(log);
+                    writer.newLine();
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error saving audit logs: " + e.getMessage());
+        }
+    }
+
+    private String cleanLog(String value) {
+        if (value == null) {
+            return "-";
+        }
+        return value.replace("|", "/").replace("\n", " ").replace("\r", " ");
     }
 }

@@ -17,7 +17,7 @@
                 <Label fx:id="welcomeLabel" styleClass="header-sub" text="" />
             </VBox>
             <Region HBox.hgrow="ALWAYS" />
-            <Button onAction="#handleLogout" text="Logout" />
+            <Button onAction="#handleLogout" text="⏻" />
         </HBox>
     </top>
 

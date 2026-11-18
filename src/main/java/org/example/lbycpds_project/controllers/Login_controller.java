@@ -15,6 +15,8 @@ import org.example.lbycpds_project.models.User;
 import org.example.lbycpds_project.models.BorrowerPortal;
 import org.example.lbycpds_project.utils.Data_Store;
 import org.example.lbycpds_project.utils.User_File;
+import org.example.lbycpds_project.controllers.Staff_controller;
+import org.example.lbycpds_project.controllers.Admin_controller;
 import java.io.IOException;
 
 public class Login_controller {
@@ -120,10 +122,10 @@ public class Login_controller {
                 openBorrowerDashboard(user);
                 break;
             case "STAFF":
-                messageLabel.setText("Staff dashboard is not available yet.");
+                openStaffDashboard(user);
                 break;
             case "ADMIN":
-                messageLabel.setText("Admin dashboard is not available yet.");
+                openAdminDashboard(user);
                 break;
             default:
                 messageLabel.setText("Unknown account role: " + user.getRole());
@@ -269,6 +271,45 @@ public class Login_controller {
         stage.centerOnScreen();
     }
 
+    // OPEN STAFF DASHBOARD (passes to staff menu screen)
+    private void openStaffDashboard(User user) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxmls/staff/Staff_View.fxml"));
+            Parent root = loader.load();
+            Staff_controller controller = loader.getController();
+            Stage stage = (Stage) userIDField.getScene().getWindow();
+            controller.setUser(user, () -> returnToLogin(stage));
+            Scene scene = new Scene(root, 1280, 720);
+            stage.setScene(scene);
+            stage.setTitle("Electronics Inventory System - Laboratory Staff");
+            stage.setResizable(false);
+            stage.centerOnScreen();
+        } catch (IOException e) {
+            e.printStackTrace();
+            messageLabel.setText("Unable to open the Staff dashboard.");
+        }
+    }
+
+    // OPEN ADMIN DASHBOARD (passes to admin menu screen)
+    private void openAdminDashboard(User user) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxmls/admin/Admin_View.fxml"));
+            Parent root = loader.load();
+            Admin_controller controller = loader.getController();
+            Stage stage = (Stage) userIDField.getScene().getWindow();
+            controller.setUser(user, () -> returnToLogin(stage));
+            Scene scene = new Scene(root, 1280, 720);
+            stage.setScene(scene);
+            stage.setTitle("Electronics Inventory System - Administrator");
+            stage.setResizable(false);
+            stage.centerOnScreen();
+        } catch (IOException e) {
+            e.printStackTrace();
+            messageLabel.setText("Unable to open the Admin dashboard.");
+        }
+    }
+
+    // RETURNS TO LOGIN
     private void returnToLogin(Stage stage) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxmls/login/Login_View.fxml"));
