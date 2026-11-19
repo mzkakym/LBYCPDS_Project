@@ -215,10 +215,12 @@ public class Admin_controller {
 
         TableView<List<String>> table = buildTable(
                 "Transaction No.",
+                "Date & Time Requested",
                 "Borrower ID",
                 "Equipment ID",
                 "Quantity",
                 "Status",
+                "Handled By (Staff)",
                 "Remarks"
         );
 
@@ -233,10 +235,12 @@ public class Admin_controller {
 
             rows.add(Arrays.asList(
                     r.getTxnNo(),
+                    r.getFormattedRequestDateTime(),
                     r.getBorrowerId(),
                     r.getItemId(),
                     String.valueOf(r.getQty()),
                     r.getStatus().name(),
+                    r.getHandledByStaff(),
                     r.getRemarks()
             ));
         }
@@ -548,9 +552,10 @@ public class Admin_controller {
                 "Equipment ID",
                 "Quantity",
                 "Purpose",
-                "Request Date",
+                "Date & Time Requested",
                 "Expected Return",
                 "Status",
+                "Handled By (Staff)",
                 "Remarks"
         );
 
@@ -572,9 +577,10 @@ public class Admin_controller {
                             r.getItemId(),
                             String.valueOf(r.getQty()),
                             r.getPurpose(),
-                            r.getRequestDate().toString(),
+                            r.getFormattedRequestDateTime(),
                             r.getExpectedReturn().toString(),
                             r.getStatus().name(),
+                            r.getHandledByStaff(),
                             r.getRemarks()
                     ));
                 }
@@ -604,7 +610,7 @@ public class Admin_controller {
 
         TableView<List<String>> table = buildTable(
                 "Date & Time",
-                "Staff ID",
+                "Staff (ID & Name)",
                 "Action",
                 "Transaction No.",
                 "Details"
@@ -612,7 +618,7 @@ public class Admin_controller {
 
         TextField searchField = new TextField();
         searchField.setPromptText(
-                "Search by Staff ID, action, or transaction..."
+                "Search by Staff ID/Name, action, or transaction..."
         );
 
         Button searchButton = primary("Search");
@@ -656,6 +662,8 @@ public class Admin_controller {
         searchButton.setOnAction(e -> refresh.run());
         searchField.setOnAction(e -> refresh.run());
         refreshButton.setOnAction(e -> refresh.run());
+
+        refresh.run();
 
         return page(
                 card("Staff Activity Logs",
@@ -717,11 +725,13 @@ public class Admin_controller {
 
         TableView<List<String>> table = buildTable(
                 "Transaction No.",
+                "Date & Time Requested",
                 "Borrower ID",
                 "Equipment ID",
                 "Quantity",
                 "Expected Return",
                 "Status",
+                "Processed By (Staff)",
                 "Remarks"
         );
 
@@ -734,11 +744,13 @@ public class Admin_controller {
 
                 rows.add(Arrays.asList(
                         r.getTxnNo(),
+                        r.getFormattedRequestDateTime(),
                         r.getBorrowerId(),
                         r.getItemId(),
                         String.valueOf(r.getQty()),
                         r.getExpectedReturn().toString(),
                         r.getStatus().name(),
+                        r.getHandledByStaff(),
                         r.getRemarks()
                 ));
             }
@@ -759,6 +771,7 @@ public class Admin_controller {
 
         TableView<List<String>> reservations = buildTable(
                 "Transaction No.",
+                "Date & Time Requested",
                 "Borrower ID",
                 "Equipment ID",
                 "Quantity",
@@ -774,6 +787,7 @@ public class Admin_controller {
 
                 reservationRows.add(Arrays.asList(
                         r.getTxnNo(),
+                        r.getFormattedRequestDateTime(),
                         r.getBorrowerId(),
                         r.getItemId(),
                         String.valueOf(r.getQty()),
@@ -982,4 +996,3 @@ public class Admin_controller {
         return button;
     }
 }
-
