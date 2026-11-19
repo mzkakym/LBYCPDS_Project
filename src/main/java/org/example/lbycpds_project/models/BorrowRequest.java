@@ -1,47 +1,71 @@
 package org.example.lbycpds_project.models;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class BorrowRequest {
     public enum Status { PENDING_STAFF_REVIEW, FILED, RETURNED_TO_STUDENT, APPROVED, REJECTED, ISSUED, RETURNED, RESERVED }
 
+    public static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm a");
     private static int counter = 1000;
 
     private final String txnNo, requestId, borrowerId, itemId, purpose, activity;
     private final int qty;
     private final LocalDate requestDate, expectedReturn;
+    private final LocalDateTime requestDateTime; // NEW: Time component
     private Status status;
     private String remarks = "-";
+    private String handledByStaff = "Unassigned"; // NEW: Staff details
 
+    // 1. Existing constructor (auto-captures current date & time)
     public BorrowRequest(String borrowerId, String itemId, int qty, String purpose,
                          String activity, LocalDate expectedReturn, Status status) {
         this("TXN-" + (++counter), "TXN-" + counter, borrowerId, itemId, qty, purpose,
-                activity, LocalDate.now(), expectedReturn, status, "-");
+                activity, LocalDate.now(), LocalDateTime.now(), expectedReturn, status, "-", "Unassigned");
     }
 
+    // 2. Existing constructor with requestId
     public BorrowRequest(String requestId, String borrowerId, String itemId, int qty,
                          String purpose, String activity, LocalDate expectedReturn, Status status) {
         this("TXN-" + (++counter), requestId, borrowerId, itemId, qty, purpose,
-                activity, LocalDate.now(), expectedReturn, status, "-");
+                activity, LocalDate.now(), LocalDateTime.now(), expectedReturn, status, "-", "Unassigned");
     }
 
+    // 3. Existing constructor for loading from file (backwards compatible)
     public BorrowRequest(String txnNo, String borrowerId, String itemId, int qty,
                          String purpose, String activity, LocalDate requestDate,
                          LocalDate expectedReturn, Status status, String remarks) {
         this(txnNo, txnNo, borrowerId, itemId, qty, purpose, activity, requestDate,
-                expectedReturn, status, remarks);
+                requestDate.atStartOfDay(), expectedReturn, status, remarks, "Unassigned");
     }
 
+    // 4. Existing 11-arg constructor (backwards compatible)
     public BorrowRequest(String txnNo, String requestId, String borrowerId, String itemId, int qty,
                          String purpose, String activity, LocalDate requestDate,
                          LocalDate expectedReturn, Status status, String remarks) {
+        this(txnNo, requestId, borrowerId, itemId, qty, purpose, activity, requestDate,
+                requestDate.atStartOfDay(), expectedReturn, status, remarks, "Unassigned");
+    }
+
+    // 5. Full constructor with Time & Staff details
+    public BorrowRequest(String txnNo, String requestId, String borrowerId, String itemId, int qty,
+                         String purpose, String activity, LocalDate requestDate,
+                         LocalDateTime requestDateTime, LocalDate expectedReturn,
+                         Status status, String remarks, String handledByStaff) {
         this.txnNo = txnNo;
         this.requestId = requestId;
-        this.borrowerId = borrowerId; this.itemId = itemId; this.qty = qty;
-        this.purpose = purpose; this.activity = activity;
-        this.requestDate = requestDate; this.expectedReturn = expectedReturn;
+        this.borrowerId = borrowerId;
+        this.itemId = itemId;
+        this.qty = qty;
+        this.purpose = purpose;
+        this.activity = activity;
+        this.requestDate = requestDate;
+        this.requestDateTime = (requestDateTime != null) ? requestDateTime : requestDate.atStartOfDay();
+        this.expectedReturn = expectedReturn;
         this.status = status;
         this.remarks = remarks;
+        this.handledByStaff = (handledByStaff != null && !handledByStaff.isEmpty()) ? handledByStaff : "Unassigned";
         updateCounter(txnNo);
     }
 
@@ -60,13 +84,29 @@ public class BorrowRequest {
     public String getActivity() { return activity; }
     public int getQty() { return qty; }
     public LocalDate getRequestDate() { return requestDate; }
+    public LocalDateTime getRequestDateTime() { return requestDateTime; }
+    public String getFormattedRequestDateTime() { return requestDateTime.format(TIME_FMT); }
     public LocalDate getExpectedReturn() { return expectedReturn; }
     public Status getStatus() { return status; }
     public String getRemarks() { return remarks; }
-    public void setStatus(Status s, String remarks) { this.status = s; this.remarks = remarks; }
+    public String getHandledByStaff() { return handledByStaff; }
 
-    @Override public String toString() {
-        return String.format("%-9s item=%-7s qty=%-3d requested=%s return by=%s | %s | remarks: %s",
-                txnNo, itemId, qty, requestDate, expectedReturn, status, remarks);
+    public void setStatus(Status s, String remarks) {
+        this.status = s;
+        this.remarks = remarks;
+    }
+
+    // Overloaded setter to record which staff member processed the request & when
+    public void setStatus(Status s, String remarks, String staffInfo) {
+        this.status = s;
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm a"));
+        this.remarks = remarks + " [" + timestamp + "]";
+        this.handledByStaff = staffInfo;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%-9s item=%-7s qty=%-3d requested=%s return by=%s | %s | staff: %s | remarks: %s",
+                txnNo, itemId, qty, getFormattedRequestDateTime(), expectedReturn, status, handledByStaff, remarks);
     }
 }
