@@ -71,13 +71,16 @@ public class Staff_controller {
         Label lastLogin = new Label("Last Login : " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy hh:mm a")));
         lastLogin.setWrapText(true);
         lastLogin.setStyle("-fx-font-size:11;");
+
         Button logoutButton = new Button("⏻");
         logoutButton.setStyle(
-                "-fx-background-color:white;" +
-                "-fx-text-fill:#DC3545;" +
-                "-fx-font-weight:bold;" +
-                "-fx-cursor:hand;"
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: #f83d3d;" +
+                        "-fx-font-size: 10px;" +
+                        "-fx-font-family: 'Arial Unicode MS';" +
+                        "-fx-cursor: hand;"
         );
+
         logoutButton.setOnAction(e -> {
             if (onLogout != null) {
                 onLogout.run();

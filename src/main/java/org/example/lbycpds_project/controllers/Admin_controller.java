@@ -90,15 +90,10 @@ public class Admin_controller {
         lastLogin.setStyle("-fx-font-size:11;");
 
         Button logoutButton = new Button("⏻");
-
-        logoutButton.setPrefWidth(50);
-        logoutButton.setPrefHeight(40);
-        logoutButton.setMinWidth(50);
-
         logoutButton.setStyle(
                 "-fx-background-color: transparent;" +
                         "-fx-text-fill: #f83d3d;" +
-                        "-fx-font-size: 24px;" +
+                        "-fx-font-size: 10px;" +
                         "-fx-font-family: 'Arial Unicode MS';" +
                         "-fx-cursor: hand;"
         );
