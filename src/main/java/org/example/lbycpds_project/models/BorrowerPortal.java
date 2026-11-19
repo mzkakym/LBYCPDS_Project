@@ -99,9 +99,14 @@ public class BorrowerPortal extends BorderPane {
 
         Label last = new Label("Last Login : " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy hh:mm a")));
         last.setStyle("-fx-font-size:11;");
-        last.setWrapText(true);
-        Button out = new Button("Logout");
-        out.setStyle("-fx-background-color:white;-fx-text-fill:#DC3545;-fx-font-weight:bold;-fx-cursor:hand;");
+        last.setWrapText(true);Button out = new Button("⏻");
+        out.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: #f83d3d;" +
+                        "-fx-font-size: 10px;" +
+                        "-fx-font-family: 'Arial Unicode MS';" +
+                        "-fx-cursor: hand;"
+        );
         out.setOnAction(e -> { if (onLogout != null) onLogout.run(); });
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
