@@ -143,8 +143,7 @@ public class Staff_controller {
                 content = buildDashboard();
         }
         contentPane.getChildren().setAll(content);
-        navButtons.forEach((name, button) -> button.setStyle(navStyle(name.equals(page)))
-        );
+        navButtons.forEach((name, button) -> button.setStyle(navStyle(name.equals(page))));
     }
 
     // DASHBOARD
@@ -168,6 +167,7 @@ public class Staff_controller {
 
         TableView<List<String>> table = buildTable(
                 "Transaction No.",
+                "Date & Time Requested",
                 "Borrower ID",
                 "Equipment ID",
                 "Quantity",
@@ -180,6 +180,7 @@ public class Staff_controller {
             if (request.getStatus() == BorrowRequest.Status.PENDING_STAFF_REVIEW || request.getStatus() == BorrowRequest.Status.FILED) {
                 rows.add(Arrays.asList(
                         request.getTxnNo(),
+                        request.getFormattedRequestDateTime(),
                         request.getBorrowerId(),
                         request.getItemId(),
                         String.valueOf(request.getQty()),
@@ -199,6 +200,7 @@ public class Staff_controller {
     private Node buildRequests() {
         TableView<List<String>> table = buildTable(
                 "Transaction No.",
+                "Date & Time Requested",
                 "Borrower ID",
                 "Equipment ID",
                 "Quantity",
@@ -216,18 +218,15 @@ public class Staff_controller {
         Button refreshButton = new Button("Refresh");
 
         Runnable refresh = () -> {
-
             List<List<String>> rows = new ArrayList<>();
 
             for (BorrowRequest r : store.getAllRequests()) {
-
-                if (r.getStatus() ==
-                        BorrowRequest.Status.PENDING_STAFF_REVIEW ||
-                        r.getStatus() ==
-                                BorrowRequest.Status.RETURNED_TO_STUDENT) {
+                if (r.getStatus() == BorrowRequest.Status.PENDING_STAFF_REVIEW ||
+                        r.getStatus() == BorrowRequest.Status.RETURNED_TO_STUDENT) {
 
                     rows.add(Arrays.asList(
                             r.getTxnNo(),
+                            r.getFormattedRequestDateTime(),
                             r.getBorrowerId(),
                             r.getItemId(),
                             String.valueOf(r.getQty()),
@@ -244,9 +243,7 @@ public class Staff_controller {
 
         // APPROVE REQUEST
         approveButton.setOnAction(e -> {
-
-            List<String> selected =
-                    table.getSelectionModel().getSelectedItem();
+            List<String> selected = table.getSelectionModel().getSelectedItem();
 
             if (selected == null) {
                 alert("Select a borrowing request first.");
@@ -256,17 +253,13 @@ public class Staff_controller {
             BorrowRequest request = findRequest(selected.get(0));
 
             if (request == null ||
-                    (request.getStatus() !=
-                            BorrowRequest.Status.PENDING_STAFF_REVIEW &&
-                            request.getStatus() !=
-                                    BorrowRequest.Status.RETURNED_TO_STUDENT)) {
-
+                    (request.getStatus() != BorrowRequest.Status.PENDING_STAFF_REVIEW &&
+                            request.getStatus() != BorrowRequest.Status.RETURNED_TO_STUDENT)) {
                 alert("This request is no longer pending.");
                 return;
             }
 
-            Equipment equipment =
-                    store.getInventory().get(request.getItemId());
+            Equipment equipment = store.getInventory().get(request.getItemId());
 
             if (equipment == null) {
                 alert("Equipment record not found.");
@@ -279,23 +272,19 @@ public class Staff_controller {
             }
 
             String staffRemarks = remarks.getText().trim();
-
             if (staffRemarks.isEmpty()) {
                 staffRemarks = "Approved by Laboratory Staff";
             }
 
-            request.setStatus(
-                    BorrowRequest.Status.APPROVED,
-                    staffRemarks
-            );
-
+            String staffInfo = getStaffDetails();
+            request.setStatus(BorrowRequest.Status.APPROVED, staffRemarks, staffInfo);
             store.saveRequests();
 
             store.recordActivity(
-                    currentUser.getUserID(),
+                    staffInfo,
                     "APPROVED REQUEST",
                     request.getTxnNo(),
-                    "Approved " + request.getQty() +
+                    "[" + currentTime() + "] Approved " + request.getQty() +
                             " unit(s) of equipment " + request.getItemId()
             );
 
@@ -307,9 +296,7 @@ public class Staff_controller {
 
         // REJECT REQUEST
         rejectButton.setOnAction(e -> {
-
-            List<String> selected =
-                    table.getSelectionModel().getSelectedItem();
+            List<String> selected = table.getSelectionModel().getSelectedItem();
 
             if (selected == null) {
                 alert("Select a borrowing request first.");
@@ -324,29 +311,23 @@ public class Staff_controller {
             BorrowRequest request = findRequest(selected.get(0));
 
             if (request == null ||
-                    (request.getStatus() !=
-                            BorrowRequest.Status.PENDING_STAFF_REVIEW &&
-                            request.getStatus() !=
-                                    BorrowRequest.Status.RETURNED_TO_STUDENT)) {
-
+                    (request.getStatus() != BorrowRequest.Status.PENDING_STAFF_REVIEW &&
+                            request.getStatus() != BorrowRequest.Status.RETURNED_TO_STUDENT)) {
                 alert("This request is no longer pending.");
                 return;
             }
 
             String reason = remarks.getText().trim();
+            String staffInfo = getStaffDetails();
 
-            request.setStatus(
-                    BorrowRequest.Status.REJECTED,
-                    reason
-            );
-
+            request.setStatus(BorrowRequest.Status.REJECTED, reason, staffInfo);
             store.saveRequests();
 
             store.recordActivity(
-                    currentUser.getUserID(),
+                    staffInfo,
                     "REJECTED REQUEST",
                     request.getTxnNo(),
-                    reason
+                    "[" + currentTime() + "] " + reason
             );
 
             remarks.clear();
@@ -357,12 +338,7 @@ public class Staff_controller {
 
         refreshButton.setOnAction(e -> refresh.run());
 
-        HBox actions = new HBox(
-                10,
-                approveButton,
-                rejectButton,
-                refreshButton
-        );
+        HBox actions = new HBox(10, approveButton, rejectButton, refreshButton);
 
         VBox content = card(
                 "Manage Borrowing Requests",
@@ -373,25 +349,23 @@ public class Staff_controller {
         );
 
         VBox.setVgrow(content, Priority.ALWAYS);
-
         refresh.run();
 
         return page(content);
     }
-
 
     // =========================================================
     // RELEASE EQUIPMENT
     // =========================================================
 
     private Node buildRelease() {
-
         TableView<List<String>> table = buildTable(
                 "Transaction No.",
                 "Borrower ID",
                 "Equipment ID",
                 "Quantity",
                 "Expected Return",
+                "Approved By (Staff)",
                 "Status"
         );
 
@@ -399,20 +373,17 @@ public class Staff_controller {
         Button refreshButton = new Button("Refresh");
 
         Runnable refresh = () -> {
-
             List<List<String>> rows = new ArrayList<>();
 
             for (BorrowRequest r : store.getAllRequests()) {
-
-                if (r.getStatus() ==
-                        BorrowRequest.Status.APPROVED) {
-
+                if (r.getStatus() == BorrowRequest.Status.APPROVED) {
                     rows.add(Arrays.asList(
                             r.getTxnNo(),
                             r.getBorrowerId(),
                             r.getItemId(),
                             String.valueOf(r.getQty()),
                             r.getExpectedReturn().toString(),
+                            r.getHandledByStaff(),
                             r.getStatus().name()
                     ));
                 }
@@ -422,9 +393,7 @@ public class Staff_controller {
         };
 
         releaseButton.setOnAction(e -> {
-
-            List<String> selected =
-                    table.getSelectionModel().getSelectedItem();
+            List<String> selected = table.getSelectionModel().getSelectedItem();
 
             if (selected == null) {
                 alert("Select an approved request first.");
@@ -433,16 +402,12 @@ public class Staff_controller {
 
             BorrowRequest request = findRequest(selected.get(0));
 
-            if (request == null ||
-                    request.getStatus() !=
-                            BorrowRequest.Status.APPROVED) {
-
+            if (request == null || request.getStatus() != BorrowRequest.Status.APPROVED) {
                 alert("This request is no longer approved.");
                 return;
             }
 
-            Equipment equipment =
-                    store.getInventory().get(request.getItemId());
+            Equipment equipment = store.getInventory().get(request.getItemId());
 
             if (equipment == null) {
                 alert("Equipment record not found.");
@@ -454,23 +419,19 @@ public class Staff_controller {
                 return;
             }
 
-            equipment.setAvailableQty(
-                    equipment.getAvailableQty() - request.getQty()
-            );
+            equipment.setAvailableQty(equipment.getAvailableQty() - request.getQty());
 
-            request.setStatus(
-                    BorrowRequest.Status.ISSUED,
-                    "Equipment released by Laboratory Staff"
-            );
+            String staffInfo = getStaffDetails();
+            request.setStatus(BorrowRequest.Status.ISSUED, "Equipment released by Laboratory Staff", staffInfo);
 
             store.saveEquipment();
             store.saveRequests();
 
             store.recordActivity(
-                    currentUser.getUserID(),
+                    staffInfo,
                     "RELEASED EQUIPMENT",
                     request.getTxnNo(),
-                    "Released " + request.getQty() +
+                    "[" + currentTime() + "] Released " + request.getQty() +
                             " unit(s) of equipment " + request.getItemId()
             );
 
@@ -488,7 +449,6 @@ public class Staff_controller {
         );
 
         VBox.setVgrow(content, Priority.ALWAYS);
-
         refresh.run();
 
         return page(content);
@@ -499,13 +459,13 @@ public class Staff_controller {
     // =========================================================
 
     private Node buildReturns() {
-
         TableView<List<String>> table = buildTable(
                 "Transaction No.",
                 "Borrower ID",
                 "Equipment ID",
                 "Quantity",
                 "Expected Return",
+                "Released By (Staff)",
                 "Status"
         );
 
@@ -514,27 +474,23 @@ public class Staff_controller {
                         "Good", "Fair", "Needs Repair", "Damaged"
                 )
         );
-
         condition.setValue("Good");
 
         Button returnButton = primary("Process Return");
         Button refreshButton = new Button("Refresh");
 
         Runnable refresh = () -> {
-
             List<List<String>> rows = new ArrayList<>();
 
             for (BorrowRequest r : store.getAllRequests()) {
-
-                if (r.getStatus() ==
-                        BorrowRequest.Status.ISSUED) {
-
+                if (r.getStatus() == BorrowRequest.Status.ISSUED) {
                     rows.add(Arrays.asList(
                             r.getTxnNo(),
                             r.getBorrowerId(),
                             r.getItemId(),
                             String.valueOf(r.getQty()),
                             r.getExpectedReturn().toString(),
+                            r.getHandledByStaff(),
                             r.getStatus().name()
                     ));
                 }
@@ -544,9 +500,7 @@ public class Staff_controller {
         };
 
         returnButton.setOnAction(e -> {
-
-            List<String> selected =
-                    table.getSelectionModel().getSelectedItem();
+            List<String> selected = table.getSelectionModel().getSelectedItem();
 
             if (selected == null) {
                 alert("Select an issued transaction first.");
@@ -555,16 +509,12 @@ public class Staff_controller {
 
             BorrowRequest request = findRequest(selected.get(0));
 
-            if (request == null ||
-                    request.getStatus() !=
-                            BorrowRequest.Status.ISSUED) {
-
+            if (request == null || request.getStatus() != BorrowRequest.Status.ISSUED) {
                 alert("This transaction is no longer active.");
                 return;
             }
 
-            Equipment equipment =
-                    store.getInventory().get(request.getItemId());
+            Equipment equipment = store.getInventory().get(request.getItemId());
 
             if (equipment == null) {
                 alert("Equipment record not found.");
@@ -572,9 +522,7 @@ public class Staff_controller {
             }
 
             String selectedCondition = condition.getValue();
-
-            int newAvailable =
-                    equipment.getAvailableQty() + request.getQty();
+            int newAvailable = equipment.getAvailableQty() + request.getQty();
 
             if (newAvailable > equipment.getTotalQty()) {
                 alert("Return quantity exceeds the inventory total.");
@@ -583,30 +531,24 @@ public class Staff_controller {
 
             equipment.setAvailableQty(newAvailable);
 
-            if (selectedCondition.equals("Needs Repair") ||
-                    selectedCondition.equals("Damaged")) {
-
+            if (selectedCondition.equals("Needs Repair") || selectedCondition.equals("Damaged")) {
                 equipment.setCondition(selectedCondition);
                 equipment.setStatus(
-                        selectedCondition.equals("Damaged")
-                                ? "Damaged"
-                                : "Under Maintenance"
+                        selectedCondition.equals("Damaged") ? "Damaged" : "Under Maintenance"
                 );
             }
 
-            request.setStatus(
-                    BorrowRequest.Status.RETURNED,
-                    "Returned. Condition: " + selectedCondition
-            );
+            String staffInfo = getStaffDetails();
+            request.setStatus(BorrowRequest.Status.RETURNED, "Returned. Condition: " + selectedCondition, staffInfo);
 
             store.saveEquipment();
             store.saveRequests();
 
             store.recordActivity(
-                    currentUser.getUserID(),
+                    staffInfo,
                     "PROCESSED RETURN",
                     request.getTxnNo(),
-                    "Returned " + request.getQty() +
+                    "[" + currentTime() + "] Returned " + request.getQty() +
                             " unit(s) of equipment " + request.getItemId() +
                             ". Condition: " + selectedCondition
             );
@@ -627,7 +569,6 @@ public class Staff_controller {
         );
 
         VBox.setVgrow(content, Priority.ALWAYS);
-
         refresh.run();
 
         return page(content);
@@ -638,7 +579,6 @@ public class Staff_controller {
     // =========================================================
 
     private Node buildOverdue() {
-
         TableView<List<String>> table = buildTable(
                 "Transaction No.",
                 "Borrower ID",
@@ -652,9 +592,7 @@ public class Staff_controller {
         List<List<String>> rows = new ArrayList<>();
 
         for (BorrowRequest r : store.getAllRequests()) {
-
-            if (r.getStatus() ==
-                    BorrowRequest.Status.ISSUED &&
+            if (r.getStatus() == BorrowRequest.Status.ISSUED &&
                     r.getExpectedReturn().isBefore(LocalDate.now())) {
 
                 long days = java.time.temporal.ChronoUnit.DAYS.between(
@@ -681,7 +619,6 @@ public class Staff_controller {
         List<List<String>> missingRows = new ArrayList<>();
 
         for (Equipment equipment : store.getInventory().values()) {
-
             if (equipment.getStatus().equalsIgnoreCase("Missing") ||
                     equipment.getStatus().equalsIgnoreCase("Damaged")) {
 
@@ -711,24 +648,19 @@ public class Staff_controller {
     // =========================================================
 
     private Node buildReservationsRepairs() {
-
-        TableView<List<String>> reservations =
-                buildTable(
-                        "Transaction No.",
-                        "Borrower ID",
-                        "Equipment ID",
-                        "Quantity",
-                        "Expected Return",
-                        "Status"
-                );
+        TableView<List<String>> reservations = buildTable(
+                "Transaction No.",
+                "Borrower ID",
+                "Equipment ID",
+                "Quantity",
+                "Expected Return",
+                "Status"
+        );
 
         List<List<String>> reservationRows = new ArrayList<>();
 
         for (BorrowRequest r : store.getAllRequests()) {
-
-            if (r.getStatus() ==
-                    BorrowRequest.Status.RESERVED) {
-
+            if (r.getStatus() == BorrowRequest.Status.RESERVED) {
                 reservationRows.add(Arrays.asList(
                         r.getTxnNo(),
                         r.getBorrowerId(),
@@ -742,20 +674,18 @@ public class Staff_controller {
 
         reservations.getItems().setAll(reservationRows);
 
-        TableView<List<String>> repairs =
-                buildTable(
-                        "Equipment ID",
-                        "Equipment Name",
-                        "Brand",
-                        "Condition",
-                        "Location",
-                        "Status"
-                );
+        TableView<List<String>> repairs = buildTable(
+                "Equipment ID",
+                "Equipment Name",
+                "Brand",
+                "Condition",
+                "Location",
+                "Status"
+        );
 
         List<List<String>> repairRows = new ArrayList<>();
 
         for (Equipment equipment : store.getInventory().values()) {
-
             if (equipment.getStatus().equalsIgnoreCase("Under Maintenance") ||
                     equipment.getStatus().equalsIgnoreCase("Damaged") ||
                     equipment.getCondition().equalsIgnoreCase("Needs Repair")) {
@@ -773,11 +703,8 @@ public class Staff_controller {
 
         repairs.getItems().setAll(repairRows);
 
-        VBox reservationCard =
-                card("Equipment Reservations", reservations);
-
-        VBox repairCard =
-                card("Equipment for Repair / Maintenance", repairs);
+        VBox reservationCard = card("Equipment Reservations", reservations);
+        VBox repairCard = card("Equipment for Repair / Maintenance", repairs);
 
         VBox.setVgrow(reservationCard, Priority.ALWAYS);
         VBox.setVgrow(repairCard, Priority.ALWAYS);
@@ -790,7 +717,6 @@ public class Staff_controller {
     // =========================================================
 
     private Node buildDutySchedule() {
-
         Label message = new Label(
                 "The duty schedule interface will be connected to the " +
                         "technician Circular Linked List implementation."
@@ -799,40 +725,40 @@ public class Staff_controller {
         message.setWrapText(true);
         message.setStyle("-fx-font-size:14;");
 
-        return page(
-                card("Technician Duty Schedule", message)
-        );
+        return page(card("Technician Duty Schedule", message));
     }
 
     // =========================================================
     // HELPERS
     // =========================================================
 
+    private String getStaffDetails() {
+        if (currentUser == null) return "Unknown Staff";
+        return currentUser.getUserID() + " - " + currentUser.getFullName();
+    }
+
+    private String currentTime() {
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm a"));
+    }
+
     private BorrowRequest findRequest(String txnNo) {
-
         for (BorrowRequest request : store.getAllRequests()) {
-
             if (request.getTxnNo().equalsIgnoreCase(txnNo)) {
                 return request;
             }
         }
-
         return null;
     }
 
     private VBox page(Node... nodes) {
-
         VBox root = new VBox(14, nodes);
         root.setPadding(new Insets(22));
         root.setStyle("-fx-background-color:" + BG + ";");
-
         return root;
     }
 
     private VBox card(String title, Node... nodes) {
-
         Label heading = new Label(title);
-
         heading.setStyle(
                 "-fx-text-fill:" + GREEN + ";" +
                         "-fx-font-weight:bold;" +
@@ -842,9 +768,7 @@ public class Staff_controller {
         VBox box = new VBox(12);
         box.getChildren().add(heading);
         box.getChildren().addAll(nodes);
-
         box.setPadding(new Insets(14, 18, 16, 18));
-
         box.setStyle(
                 "-fx-background-color:white;" +
                         "-fx-border-color:" + GREEN + " transparent transparent transparent;" +
@@ -855,20 +779,14 @@ public class Staff_controller {
     }
 
     private HBox statCard(Label value, String title, String color) {
-
-        value.setStyle(
-                "-fx-font-size:26;" +
-                        "-fx-font-weight:bold;"
-        );
+        value.setStyle("-fx-font-size:26;-fx-font-weight:bold;");
 
         Label description = new Label(title);
         description.setStyle("-fx-text-fill:#6E6E6E;");
 
         VBox box = new VBox(5, value, description);
-
         box.setPadding(new Insets(16));
         box.setMaxWidth(Double.MAX_VALUE);
-
         box.setStyle(
                 "-fx-background-color:white;" +
                         "-fx-border-color:" + color + " transparent transparent transparent;" +
@@ -876,33 +794,20 @@ public class Staff_controller {
         );
 
         HBox.setHgrow(box, Priority.ALWAYS);
-
         return new HBox(box);
     }
 
     private TableView<List<String>> buildTable(String... columns) {
-
         TableView<List<String>> table = new TableView<>();
-
-        table.setColumnResizePolicy(
-                TableView.CONSTRAINED_RESIZE_POLICY
-        );
-
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setPlaceholder(new Label("No records found."));
 
         for (int i = 0; i < columns.length; i++) {
-
             final int index = i;
-
-            TableColumn<List<String>, String> column =
-                    new TableColumn<>(columns[i]);
-
+            TableColumn<List<String>, String> column = new TableColumn<>(columns[i]);
             column.setCellValueFactory(data ->
-                    new SimpleStringProperty(
-                            data.getValue().get(index)
-                    )
+                    new SimpleStringProperty(data.getValue().get(index))
             );
-
             table.getColumns().add(column);
         }
 
@@ -910,9 +815,7 @@ public class Staff_controller {
     }
 
     private Button primary(String text) {
-
         Button button = new Button(text);
-
         button.setStyle(
                 "-fx-background-color:" + GREEN + ";" +
                         "-fx-text-fill:white;" +
@@ -921,14 +824,11 @@ public class Staff_controller {
                         "-fx-background-radius:3;" +
                         "-fx-cursor:hand;"
         );
-
         return button;
     }
 
     private Button danger(String text) {
-
         Button button = new Button(text);
-
         button.setStyle(
                 "-fx-background-color:#DC3545;" +
                         "-fx-text-fill:white;" +
@@ -936,14 +836,11 @@ public class Staff_controller {
                         "-fx-padding:8 16 8 16;" +
                         "-fx-background-radius:3;"
         );
-
         return button;
     }
 
     private void alert(String message) {
-
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
