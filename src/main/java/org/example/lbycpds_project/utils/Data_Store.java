@@ -34,6 +34,33 @@ public final class Data_Store {
     public Queue<BorrowRequest> getReservationQueue() { return reservationQueue; }
     public List<BorrowRequest> getAllRequests() { return allRequests; }
 
+    // GENERATE EQUIPMENT ID AUTOMATICALLY
+    public synchronized String generateEquipmentId(String category) {
+        String prefix;
+        if (category.equalsIgnoreCase("Consumable")) {
+            prefix = "C";
+        } else if (category.equalsIgnoreCase("Instrument")) {
+            prefix = "I";
+        } else {
+            throw new IllegalArgumentException("Invalid equipment category.");
+        }
+        int highestNumber = 0;
+        for (String id : inventory.keySet()) {
+            if (id.toUpperCase().startsWith(prefix)) {
+                try {
+                    int number = Integer.parseInt(id.substring(1));
+                    if (number > highestNumber) {
+                        highestNumber = number;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        if (highestNumber >= 9999) {
+            throw new IllegalStateException("Maximum equipment ID limit reached.");
+        }
+        return prefix + String.format("%04d", highestNumber + 1);
+    }
     public void addRequest(BorrowRequest request) {
         allRequests.add(request);
         if (request.getStatus() == BorrowRequest.Status.RESERVED) reservationQueue.offer(request);

@@ -34,7 +34,8 @@ public class EquipmentManagerPane extends VBox {
     // ---- Form controls (Add / Edit) ----
     private final TextField idField = new TextField();
     private final TextField nameField = new TextField();
-    private final TextField categoryField = new TextField();
+    private final ComboBox<String> categoryBox = new ComboBox<>(
+            FXCollections.observableArrayList("Consumable", "Instrument"));
     private final TextField brandField = new TextField();
     private final Spinner<Integer> totalQtySpinner = new Spinner<>(1, 100000, 1);
     private final TextField locationField = new TextField();
@@ -125,9 +126,11 @@ public class EquipmentManagerPane extends VBox {
     //  Add / Edit Form Section
     // =====================================================================
     private Node buildFormCard() {
-        idField.setPromptText("e.g. E005");
+        idField.setPromptText("-");
+        idField.setEditable(false);
         nameField.setPromptText("e.g. Function Generator");
-        categoryField.setPromptText("e.g. Instrument / Component");
+        categoryBox.setPromptText("Select Category");
+        categoryBox.setMaxWidth(Double.MAX_VALUE);
         brandField.setPromptText("e.g. Rigol");
         locationField.setPromptText("e.g. Shelf A5");
         totalQtySpinner.setEditable(true);
@@ -147,7 +150,7 @@ public class EquipmentManagerPane extends VBox {
 
         addField(grid, 0, 0, "Equipment ID:", idField);
         addField(grid, 2, 0, "Name:", nameField);
-        addField(grid, 0, 1, "Category:", categoryField);
+        addField(grid, 0, 1, "Category:", categoryBox);
         addField(grid, 2, 1, "Brand:", brandField);
         addField(grid, 0, 2, "Total Quantity:", totalQtySpinner);
         addField(grid, 2, 2, "Location:", locationField);
@@ -226,7 +229,7 @@ public class EquipmentManagerPane extends VBox {
         idField.setText(eq.getId());
         idField.setDisable(true); // ID is the HashMap key; keep immutable while editing
         nameField.setText(eq.getName());
-        categoryField.setText(eq.getCategory());
+        categoryBox.setValue(eq.getCategory());
         brandField.setText(eq.getBrand());
         totalQtySpinner.getValueFactory().setValue(eq.getTotalQty());
         locationField.setText(eq.getLocation());
@@ -235,19 +238,22 @@ public class EquipmentManagerPane extends VBox {
     }
 
     private void handleSave() {
-        String id = idField.getText().trim().toUpperCase();
+        String id;
         String name = nameField.getText().trim();
-        String category = categoryField.getText().trim();
+        String category = categoryBox.getValue();
         String brand = brandField.getText().trim();
         String location = locationField.getText().trim();
         String condition = conditionBox.getValue();
         String status = statusBox.getValue();
-
-        try { totalQtySpinner.increment(0); } catch (Exception ignored) { }
+        try {
+            totalQtySpinner.increment(0);
+            } catch (Exception ignored) {
+        }
         int totalQty = totalQtySpinner.getValue() == null ? 0 : totalQtySpinner.getValue();
 
-        if (id.isEmpty() || name.isEmpty() || category.isEmpty() || brand.isEmpty() || location.isEmpty()) {
-            alert(Alert.AlertType.WARNING, "Missing Fields", "Please fill in ID, Name, Category, Brand, and Location.");
+        // VALIDATE REQUIRED FIELDS
+        if (name.isEmpty() || category == null || brand.isEmpty() || location.isEmpty()) {
+            alert(Alert.AlertType.WARNING, "Missing Fields", "Please fill in Name, Category, Brand, and Location.");
             return;
         }
         if (totalQty <= 0) {
@@ -255,10 +261,12 @@ public class EquipmentManagerPane extends VBox {
             return;
         }
 
+        // GENERATE ID ONLY WHEN ADDING A NEW ITEM
         if (!editMode) {
-            // ADD NEW ITEM
-            if (inventory.containsKey(id)) {
-                alert(Alert.AlertType.WARNING, "Duplicate ID", "Equipment ID '" + id + "' already exists.");
+            try {
+                id = Data_Store.getInstance().generateEquipmentId(category);
+            } catch (IllegalArgumentException | IllegalStateException ex) {
+                alert(Alert.AlertType.ERROR, "ID Generation Error", ex.getMessage());
                 return;
             }
             Equipment created = new Equipment(id, name, category, brand, totalQty, location, condition);
@@ -267,9 +275,12 @@ public class EquipmentManagerPane extends VBox {
             Data_Store.getInstance().saveEquipment();
             alert(Alert.AlertType.INFORMATION, "Item Added", name + " (" + id + ") has been added to inventory.");
         } else {
-            // EDIT EXISTING ITEM
+            // EDIT EXISTING ITEM - KEEP ORIGINAL ID
+            id = idField.getText().trim();
             Equipment existing = inventory.get(id);
-            if (existing == null) return;
+            if (existing == null) {
+                return;
+            }
             try {
                 existing.setTotalQty(totalQty);
             } catch (IllegalArgumentException ex) {
@@ -285,7 +296,6 @@ public class EquipmentManagerPane extends VBox {
             Data_Store.getInstance().saveEquipment();
             alert(Alert.AlertType.INFORMATION, "Item Updated", name + " (" + id + ") has been updated.");
         }
-
         switchToAddMode();
         refreshTable();
     }
@@ -339,9 +349,10 @@ public class EquipmentManagerPane extends VBox {
         formHeader.setText("Add New Equipment");
         saveBtn.setText("Add Item");
         idField.setDisable(false);
+        idField.setEditable(false);
         idField.clear();
         nameField.clear();
-        categoryField.clear();
+        categoryBox.setValue(null);
         brandField.clear();
         locationField.clear();
         totalQtySpinner.getValueFactory().setValue(1);

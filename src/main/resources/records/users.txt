@@ -5,6 +5,10 @@ FORMAT: userID | password | role | fullname | department | contact | status
 STAFF001|staff123|STAFF|Pedro Santos|Laboratory Staff|Pedro_Santos@gmail.com|VERIFIED
 ADMIN001|admin123|ADMIN|Maria Reyes|Administration|Maria_Reyes@gmail.com|VERIFIED
 20260002|password123|BORROWER|Ana Cruz|Computer Engineering|Ana_Cruz@gmail.com|VERIFIED
-1230283|password123|BORROWER|james|CPE|james@gmail.com|PENDING
+1230283|password123|BORROWER|james|CPE|james@gmail.com|VERIFIED
 
-12404756|testpassword123!|BORROWER|Jude Daniel F. Tungol|Computer Engineering|jude_tungol@dlsu.edu.ph|PENDING
+12404756|testpassword123!|BORROWER|Jude Daniel F. Tungol|Computer Engineering|jude_tungol@dlsu.edu.ph|VERIFIED
+
+12403873|pw123|BORROWER|Neo Simeon|BsCpE|Neo_Simeon@gmail.com|VERIFIED
+
+87654321|pw123|BORROWER|Joseph|BsCpE|joseph@gmail.com|VERIFIED
