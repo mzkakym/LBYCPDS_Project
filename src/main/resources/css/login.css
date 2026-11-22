@@ -1,0 +1,61 @@
+.login-root {
+    -fx-font-family: "Arial";
+}
+
+.login-label {
+    -fx-text-fill: #b5b5b5;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.login-field {
+    -fx-background-color: white;
+    -fx-background-radius: 6px;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+    -fx-padding: 10px;
+    -fx-font-size: 14px;
+}
+
+.login-field:focused {
+    -fx-border-color: #006633;
+    -fx-border-width: 2px;
+}
+
+.login-button {
+    -fx-background-color: #006633;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.login-button:hover {
+    -fx-background-color: #008040;
+}
+
+.login-button:pressed {
+    -fx-background-color: #004d26;
+}
+
+/* SECONDARY BUTTONS */
+
+.secondary-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+.secondary-button:hover {
+    -fx-text-fill: #66cc99;
+    -fx-underline: true;
+}
+
+.error-label {
+    -fx-text-fill: #ff4444;
+    -fx-font-size: 12px;
+}
