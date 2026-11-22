@@ -7,7 +7,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -62,11 +63,19 @@ public class BorrowerPortal extends BorderPane {
 
     // frame
     private Node buildTopBar() {
+        // DLSU LOGO
+        Image logoImage = new Image(getClass().getResource("/images/Logo.png").toExternalForm());
+        ImageView logo = new ImageView(logoImage);
+        logo.setFitHeight(33);
+        logo.setFitWidth(38);
+        logo.setPreserveRatio(true);
+
+        // DLSU TITLE
         Label dlsu = new Label("DLSU");
         dlsu.setStyle("-fx-text-fill:" + GREEN + ";-fx-font-weight:bold;-fx-font-size:16;");
         Label sub = new Label("Electronics Inventory System");
         sub.setStyle("-fx-text-fill:" + GRAY + ";");
-        HBox left = new HBox(10, dlsu, sub);
+        HBox left = new HBox(10, logo, dlsu, sub);
         left.setAlignment(Pos.CENTER_LEFT);
 
         Label name = new Label(userName.toUpperCase());
