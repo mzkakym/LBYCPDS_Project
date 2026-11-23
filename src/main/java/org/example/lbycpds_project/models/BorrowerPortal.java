@@ -405,6 +405,8 @@ public class BorrowerPortal extends BorderPane {
 
 
     private Node buildRequest() {
+        TextField section = new TextField();
+        section.setPromptText("e.g. LBYCPDS_E27");
         TextField purpose = new TextField();
         TextField activity = new TextField();
         DatePicker ret = new DatePicker(LocalDate.now().plusDays(3));
@@ -431,20 +433,23 @@ public class BorrowerPortal extends BorderPane {
         form.add(new Label("Equipment items"), 0, 0);
         form.add(requestItemsBox, 1, 0);
         form.add(addItem, 1, 1);
-        addRow(form, 2, "Purpose", purpose);
-        addRow(form, 3, "Subject / Lab Activity", activity);
-        addRow(form, 4, "Expected Return Date", ret);
+        addRow(form, 2, "Course & Section", section);
+        addRow(form, 3, "Purpose", purpose);
+        addRow(form, 4, "Subject / Lab Activity", activity);
+        addRow(form, 5, "Expected Return Date", ret);
 
         Button submit = primary("Submit Request");
         Button clear = new Button("Clear");
         HBox btns = new HBox(8, submit, clear);
-        form.add(btns, 1, 5);
+        form.add(btns, 1, 6);
 
         Runnable clearForm = () -> {
             requestItems.clear();
             requestItemsBox.getChildren().clear();
             addRequestItem();
-            purpose.clear(); activity.clear();
+            section.clear();
+            purpose.clear();
+            activity.clear();
             ret.setValue(LocalDate.now().plusDays(3));
         };
         clear.setOnAction(e -> clearForm.run());
@@ -464,7 +469,9 @@ public class BorrowerPortal extends BorderPane {
                 }
                 items.add(new RequestItem(item.idField, item.qtyField, eq, q));
             }
+            String sec = section.getText().trim().toUpperCase();
             String p = purpose.getText().trim(), a = activity.getText().trim();
+            if (sec.isEmpty()) { warn("Course & Section is required (e.g. LBYCPDS_E27)."); return; }
             if (p.isEmpty() || a.isEmpty()) { warn("Purpose and subject/activity are required."); return; }
             LocalDate d = ret.getValue();
             if (d == null) { warn("Please choose an expected return date."); return; }
@@ -488,7 +495,7 @@ public class BorrowerPortal extends BorderPane {
             String requestId = "REQ-" + System.currentTimeMillis();
             for (RequestItem item : items) {
                 boolean reserved = reserveShortItems && shortItems.contains(item);
-                BorrowRequest r = new BorrowRequest(requestId, userId, item.equipment.getId(), item.qty, p, a, d,
+                BorrowRequest r = new BorrowRequest(requestId, userId, item.equipment.getId(), item.qty, p, a, sec, d,
                         reserved ? BorrowRequest.Status.RESERVED : BorrowRequest.Status.PENDING_STAFF_REVIEW);
                 if (reserved) reservationQueue.offer(r); else staffQueue.offer(r);
                 allRequests.add(r);
@@ -539,10 +546,13 @@ public class BorrowerPortal extends BorderPane {
     private Node buildStatus() {
         TableView<RequestSummary> t = new TableView<>();
         t.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        t.getColumns().addAll(summaryColumn("Borrower", RequestSummary::borrower),
+        t.getColumns().addAll(
+                summaryColumn("Borrower", RequestSummary::borrower),
                 summaryColumn("ID", RequestSummary::borrowerId),
+                summaryColumn("Section", RequestSummary::section),
                 summaryColumn("Date Requested", RequestSummary::date),
-                summaryColumn("Status", RequestSummary::status));
+                summaryColumn("Status", RequestSummary::status)
+        );
         t.setPlaceholder(new Label("No records to display."));
         t.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2 && t.getSelectionModel().getSelectedItem() != null)
@@ -570,13 +580,21 @@ public class BorrowerPortal extends BorderPane {
 
     private void showRequestDetails(RequestSummary summary) {
         TableView<List<String>> items = table("Item", "Quantity", "Return Date", "Status");
-        for (BorrowRequest r : summary.requests)
-            items.getItems().add(Arrays.asList(itemName(r.getItemId()), String.valueOf(r.getQty()),
-                    r.getExpectedReturn().toString(), pretty(r.getStatus())));
+        for (BorrowRequest r : summary.requests) {
+            items.getItems().add(Arrays.asList(
+                    itemName(r.getItemId()),
+                    String.valueOf(r.getQty()),
+                    r.getExpectedReturn().toString(),
+                    pretty(r.getStatus())
+            ));
+        }
+
+        String section = summary.requests.isEmpty() ? "N/A" : summary.requests.get(0).getSection();
+
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Request Details");
-        dialog.setHeaderText(summary.borrower + " (" + summary.borrowerId + ") - "
-                + summary.date + " - " + summary.status);
+        dialog.setHeaderText(summary.borrower + " (" + summary.borrowerId + ") | Section: "
+                + section + " - " + summary.date + " - " + summary.status);
         dialog.getDialogPane().setContent(items);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
         dialog.getDialogPane().setPrefSize(620, 360);
@@ -584,19 +602,21 @@ public class BorrowerPortal extends BorderPane {
     }
 
     private static final class RequestSummary {
-        private final String borrower, borrowerId, date, status;
+        private final String borrower, borrowerId, section, date, status;
         private final List<BorrowRequest> requests;
 
         private RequestSummary(String borrower, String borrowerId, List<BorrowRequest> requests) {
             this.borrower = borrower;
             this.borrowerId = borrowerId;
             this.requests = requests;
+            this.section = requests.get(0).getSection();
             this.date = requests.get(0).getRequestDate().toString();
             this.status = pretty(requests.get(0).getStatus());
         }
 
         private String borrower() { return borrower; }
         private String borrowerId() { return borrowerId; }
+        private String section() { return section; }
         private String date() { return date; }
         private String status() { return status; }
     }
