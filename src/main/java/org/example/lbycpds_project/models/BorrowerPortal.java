@@ -16,6 +16,22 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class BorrowerPortal extends BorderPane {
+    private static int compareEquipmentId(String left, String right) {
+        String leftPrefix = left.replaceAll("\\d+$", "");
+        String rightPrefix = right.replaceAll("\\d+$", "");
+        int prefixComparison = leftPrefix.compareToIgnoreCase(rightPrefix);
+        if (prefixComparison != 0) return prefixComparison;
+
+        java.util.regex.Matcher leftMatch =
+                java.util.regex.Pattern.compile("(\\d+$)").matcher(left);
+        java.util.regex.Matcher rightMatch =
+                java.util.regex.Pattern.compile("(\\d+$)").matcher(right);
+        int leftNumber = leftMatch.find() ? Integer.parseInt(leftMatch.group(1)) : 0;
+        int rightNumber = rightMatch.find() ? Integer.parseInt(rightMatch.group(1)) : 0;
+        int numberComparison = Integer.compare(leftNumber, rightNumber);
+        return numberComparison != 0 ? numberComparison : left.compareToIgnoreCase(right);
+    }
+
     // theme
     private static final String GREEN = "#006738", SELECT = "#D0E6D9", BG = "#F8F9FC",
             GRAY = "#6E6E6E", LINE = "#E1E1E1";
@@ -228,7 +244,8 @@ public class BorrowerPortal extends BorderPane {
                 }
             }
             res.removeIf(eq -> onlyAvail.isSelected() && eq.getAvailableQty() == 0);
-            res.sort(Comparator.comparing(Equipment::getName));
+            res.sort(Comparator.comparing(Equipment::getName, String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(Equipment::getId, BorrowerPortal::compareEquipmentId));
 
             if (!k.isEmpty() && !k.equals(recentSearches.peek())) recentSearches.push(k);
 

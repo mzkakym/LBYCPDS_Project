@@ -17,13 +17,29 @@ import java.util.*;
  * Can be embedded inside AdminPortal, StaffPortal, or a standalone Scene.
  */
 public class EquipmentManagerPane extends VBox {
-    // ---- theme (matches BorrowerPortal) ----
+    private static int compareEquipmentId(String left, String right) {
+        String leftPrefix = left.replaceAll("\\d+$", "");
+        String rightPrefix = right.replaceAll("\\d+$", "");
+        int prefixComparison = leftPrefix.compareToIgnoreCase(rightPrefix);
+        if (prefixComparison != 0) return prefixComparison;
+
+        java.util.regex.Matcher leftMatch =
+                java.util.regex.Pattern.compile("(\\d+$)").matcher(left);
+        java.util.regex.Matcher rightMatch =
+                java.util.regex.Pattern.compile("(\\d+$)").matcher(right);
+        int leftNumber = leftMatch.find() ? Integer.parseInt(leftMatch.group(1)) : 0;
+        int rightNumber = rightMatch.find() ? Integer.parseInt(rightMatch.group(1)) : 0;
+        int numberComparison = Integer.compare(leftNumber, rightNumber);
+        return numberComparison != 0 ? numberComparison : left.compareToIgnoreCase(right);
+    }
+
+    //theme
     private static final String GREEN = "#006738", BG = "#F8F9FC";
 
     private final Map<String, Equipment> inventory;
     private final List<BorrowRequest> allRequests;
 
-    // ---- Search controls ----
+    // Search controls
     private final ComboBox<String> searchBy = new ComboBox<>(
             FXCollections.observableArrayList("Name", "ID", "Category", "Brand", "Location"));
     private final TextField keywordField = new TextField();
@@ -31,7 +47,7 @@ public class EquipmentManagerPane extends VBox {
     private final TableView<List<String>> table = buildTable(
             "ID", "Name", "Category", "Brand", "Location", "Available", "Total", "Condition", "Status");
 
-    // ---- Form controls (Add / Edit) ----
+    // Form controls
     private final TextField idField = new TextField();
     private final TextField nameField = new TextField();
     private final ComboBox<String> categoryBox = new ComboBox<>(
@@ -64,9 +80,7 @@ public class EquipmentManagerPane extends VBox {
         refreshTable();
     }
 
-    // =====================================================================
     //  Search Section
-    // =====================================================================
     private Node buildSearchCard() {
         searchBy.setValue("Name");
         keywordField.setPromptText("Enter keyword or ID...");
@@ -91,9 +105,7 @@ public class EquipmentManagerPane extends VBox {
         return card("Search Equipment", row);
     }
 
-    // =====================================================================
     //  Inventory Table + Edit/Delete Action Bar
-    // =====================================================================
     private Node buildTableCard() {
         Button editBtn = primaryButton("Edit Selected");
         Button deleteBtn = dangerButton("Delete Selected");
@@ -122,9 +134,7 @@ public class EquipmentManagerPane extends VBox {
         return box;
     }
 
-    // =====================================================================
     //  Add / Edit Form Section
-    // =====================================================================
     private Node buildFormCard() {
         idField.setPromptText("-");
         idField.setEditable(false);
@@ -172,16 +182,14 @@ public class EquipmentManagerPane extends VBox {
         return box;
     }
 
-    // =====================================================================
     //  CRUD Operations
-    // =====================================================================
     public void refreshTable() {
         String kw = keywordField.getText().trim().toLowerCase();
         String mode = searchBy.getValue();
         List<Equipment> matches = new ArrayList<>();
 
         if (mode.equals("ID") && !kw.isEmpty()) {
-            Equipment exact = inventory.get(kw.toUpperCase()); // O(1) HashMap lookup
+            Equipment exact = inventory.get(kw.toUpperCase());
             if (exact != null) matches.add(exact);
         } else {
             for (Equipment eq : inventory.values()) {
@@ -227,7 +235,7 @@ public class EquipmentManagerPane extends VBox {
         saveBtn.setText("Save Changes");
 
         idField.setText(eq.getId());
-        idField.setDisable(true); // ID is the HashMap key; keep immutable while editing
+        idField.setDisable(true);
         nameField.setText(eq.getName());
         categoryBox.setValue(eq.getCategory());
         brandField.setText(eq.getBrand());
@@ -360,9 +368,7 @@ public class EquipmentManagerPane extends VBox {
         statusBox.setValue("Available");
     }
 
-    // =====================================================================
     //  UI Helpers (matches BorrowerPortal styling)
-    // =====================================================================
     private VBox card(String title, Node... body) {
         Label t = new Label(title);
         t.setStyle("-fx-text-fill:" + GREEN + ";-fx-font-weight:bold;-fx-font-size:16;");

@@ -36,6 +36,11 @@
                         <Button onAction="#handleSearch" styleClass="primary" text="Search" />
                         <Button onAction="#handleRecentSearches" text="Recent Searches" />
                     </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <Label styleClass="field-name" text="Sort by" />
+                        <ComboBox fx:id="sortByBox" prefWidth="150.0" />
+                        <Button fx:id="sortOrderButton" onAction="#handleSortOrder" text="Ascending" />
+                    </HBox>
                     <Label fx:id="searchMessageLabel" text="" />
                     <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS">
                         <columns>
