@@ -1,1 +1,13 @@
 Date|Staff ID|Action|Transaction No.|Details
+2026-11-23 08:10:33|STAFF001 - Pedro Santos|APPROVED REQUEST|TXN-1001|[08:10 AM] Approved 500 unit(s) of equipment C0002
+2026-11-23 08:10:35|STAFF001 - Pedro Santos|APPROVED REQUEST|TXN-1002|[08:10 AM] Approved 100 unit(s) of equipment C0008
+2026-11-23 08:10:38|STAFF001 - Pedro Santos|APPROVED REQUEST|TXN-1004|[08:10 AM] Approved 20 unit(s) of equipment C0004
+2026-11-23 08:10:41|STAFF001 - Pedro Santos|APPROVED REQUEST|TXN-1003|[08:10 AM] Approved 3 unit(s) of equipment I0005
+2026-11-23 08:11:02|STAFF001 - Pedro Santos|RELEASED EQUIPMENT|TXN-1001|[08:11 AM] Released 500 unit(s) of equipment C0002
+2026-11-23 08:11:06|STAFF001 - Pedro Santos|RELEASED EQUIPMENT|TXN-1002|[08:11 AM] Released 100 unit(s) of equipment C0008
+2026-11-23 08:11:09|STAFF001 - Pedro Santos|RELEASED EQUIPMENT|TXN-1003|[08:11 AM] Released 3 unit(s) of equipment I0005
+2026-11-23 08:11:11|STAFF001 - Pedro Santos|RELEASED EQUIPMENT|TXN-1004|[08:11 AM] Released 20 unit(s) of equipment C0004
+2026-11-23 08:11:21|STAFF001 - Pedro Santos|PROCESSED RETURN|TXN-1001|[08:11 AM] Returned 500 unit(s) of equipment C0002. Condition: Needs Repair
+2026-11-23 08:11:27|STAFF001 - Pedro Santos|PROCESSED RETURN|TXN-1003|[08:11 AM] Returned 3 unit(s) of equipment I0005. Condition: Damaged
+2026-11-23 08:11:32|STAFF001 - Pedro Santos|PROCESSED RETURN|TXN-1002|[08:11 AM] Returned 100 unit(s) of equipment C0008. Condition: Fair
+2026-11-23 08:11:39|STAFF001 - Pedro Santos|PROCESSED RETURN|TXN-1004|[08:11 AM] Returned 20 unit(s) of equipment C0004. Condition: Needs Repair

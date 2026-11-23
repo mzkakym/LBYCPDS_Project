@@ -1,8 +1,8 @@
 id|name|category|brand|totalQty|location|condition|availableQty|status
 C0003|BJT MOSFET|Consumable|Motorola|100|Shelf B6|Good|100|Available
-C0004|Transistor|Consumable|Fairchild|40|Drawer B5|Fair|40|Available
+C0004|Transistor|Consumable|Fairchild|40|Drawer B5|Needs Repair|40|Under Maintenance
 C0001|500 Resistor|Consumable|FairChild|500|Shelf B|Good|500|Available
-C0002|10k Ohm Resistor|Consumable|Fairchild|10000|Drawer B6|Fair|10000|Available
+C0002|10k Ohm Resistor|Consumable|Fairchild|10000|Drawer B6|Needs Repair|10000|Under Maintenance
 I0007|220V-110V 1A Transformer|Instrument|Lockheed|3|Drawer B1|Good|3|Available
 C0007|Jumper Wires|Consumable|Generic|3|Drawer B2|New|3|Available
 C0008|10k Resistor|Consumable|Yageo|200|Drawer B1|Fair|200|Available
@@ -11,6 +11,6 @@ C0006|10k Resistor|Consumable|Vishay|150|Drawer B3|Good|150|Available
 I0002|Oscilloscope|Instrument|Tektronix|5|Shelf A1|Good|5|Available
 I0001|220Vac to 12Vdc|Instrument|Fairchild|4|Shelf B5|Fair|4|Available
 I0006|Audio Generator|Instrument|Fluke|5|Shelf A4|Good|5|Available
-I0005|Digital Multimeter|Instrument|Keysight|6|Shelf A4|Good|6|Available
+I0005|Digital Multimeter|Instrument|Keysight|6|Shelf A4|Damaged|6|Damaged
 I0004|Oscilloscope|Instrument|Siglent|4|Shelf A3|Good|4|Available
 I0003|Digital Multimeter|Instrument|Fluke|10|Shelf A2|Good|10|Available

@@ -1,1 +1,5 @@
 txnNo|requestId|borrowerId|itemId|qty|purpose|activity|requestDate|expectedReturn|status|remarks
+TXN-1001|REQ-1795392464903|12402370|C0002|500|Laboratory|LBYCPC2|2026-11-23|2026-11-26|RETURNED|Returned. Condition: Needs Repair [08:11 AM]
+TXN-1002|REQ-1795392464903|12402370|C0008|100|Laboratory|LBYCPC2|2026-11-23|2026-11-26|RETURNED|Returned. Condition: Fair [08:11 AM]
+TXN-1003|REQ-1795392464903|12402370|I0005|3|Laboratory|LBYCPC2|2026-11-23|2026-11-26|RETURNED|Returned. Condition: Damaged [08:11 AM]
+TXN-1004|REQ-1795392464903|12402370|C0004|20|Laboratory|LBYCPC2|2026-11-23|2026-11-26|RETURNED|Returned. Condition: Needs Repair [08:11 AM]
