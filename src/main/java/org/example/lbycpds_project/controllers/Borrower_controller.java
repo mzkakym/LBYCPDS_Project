@@ -26,11 +26,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * JavaFX version of the console BorrowerMenu.
- * Menu 1 -> Search tab, 2 -> Availability tab, 3 -> Request tab,
- * 4 -> My Requests tab, 0 -> Logout button.
- */
 public class Borrower_controller {
 
     private final Data_Store store = Data_Store.getInstance();
@@ -43,6 +38,8 @@ public class Borrower_controller {
 
     // SEARCH TAB
     @FXML private ComboBox<String> searchByBox;
+    @FXML private ComboBox<String> sortByBox;
+    @FXML private Button sortOrderButton;
     @FXML private TextField keywordField;
     @FXML private CheckBox onlyAvailableBox;
     @FXML private Label searchMessageLabel;
@@ -85,6 +82,12 @@ public class Borrower_controller {
     public void initialize() {
         searchByBox.setItems(FXCollections.observableArrayList("ID", "Name", "Category", "Brand", "Location"));
         searchByBox.getSelectionModel().select("Name");
+        sortByBox.setItems(FXCollections.observableArrayList(
+                "Name", "ID", "Category", "Brand", "Location",
+                "Available", "Condition", "Status"));
+        sortByBox.getSelectionModel().select("Name");
+        sortByBox.setOnAction(event -> handleSortResults());
+        sortOrderButton.setText("Ascending");
         addRequestItem(null);
 
         // search results table
@@ -97,6 +100,12 @@ public class Borrower_controller {
                 c.getValue().getAvailableQty() + " / " + c.getValue().getTotalQty()));
         colCondition.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getCondition()));
         colStatus.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStatus()));
+        colId.setComparator(Borrower_controller::compareNatural);
+        colName.setComparator(String.CASE_INSENSITIVE_ORDER);
+        colCategory.setComparator(String.CASE_INSENSITIVE_ORDER);
+        colBrand.setComparator(String.CASE_INSENSITIVE_ORDER);
+        colLocation.setComparator(String.CASE_INSENSITIVE_ORDER);
+        colAvail.setComparator((a, b) -> Integer.compare(parseAvailableQty(a), parseAvailableQty(b)));
         resultsTable.setPlaceholder(new Label("Run a search to see equipment here."));
 
         // availability table
@@ -163,7 +172,6 @@ public class Borrower_controller {
         });
     }
 
-    /** Called by Login_controller right after a successful login. */
     public void setUser(User user) {
         this.user = user;
         welcomeLabel.setText("Logged in as " + user.getFullName() + " (" + user.getUserID() + ")");
@@ -210,7 +218,10 @@ public class Borrower_controller {
         }
 
         results.removeIf(e -> onlyAvail && e.getAvailableQty() == 0);
-        results.sort(Comparator.comparing(Equipment::getName));
+        results.sort(comparatorForSortOption(sortByBox.getValue()));
+        if ("Descending".equals(sortOrderButton.getText())) {
+            results.sort(comparatorForSortOption(sortByBox.getValue()).reversed());
+        }
 
         resultsTable.setItems(FXCollections.observableArrayList(results));
         if (results.isEmpty()) {
@@ -241,7 +252,6 @@ public class Borrower_controller {
         dialog.showAndWait();
     }
 
-    /** Convenience: pick a row in the results and jump to the Request tab with its ID filled in. */
     @FXML
     private void handleRequestSelected() {
         Equipment selected = resultsTable.getSelectionModel().getSelectedItem();
@@ -296,7 +306,6 @@ public class Borrower_controller {
                     true);
         }
     }
-
 
     // 3. REQUEST FOR ITEM
     @FXML
@@ -392,7 +401,6 @@ public class Borrower_controller {
         requestMessageLabel.setText("");
     }
 
-
     // LOGOUT (menu option 0)
     @FXML
     private void handleLogout(ActionEvent event) {
@@ -407,8 +415,85 @@ public class Borrower_controller {
         }
     }
 
-
     // HELPERS
+    @FXML
+    private void handleSortOrder() {
+        sortOrderButton.setText("Ascending".equals(sortOrderButton.getText())
+                ? "Descending"
+                : "Ascending");
+        handleSortResults();
+    }
+
+    private void handleSortResults() {
+        if (sortByBox == null || sortByBox.getValue() == null
+                || resultsTable == null || resultsTable.getItems().isEmpty()) return;
+
+        List<Equipment> sorted = new ArrayList<>(resultsTable.getItems());
+        Comparator<Equipment> comparator = comparatorForSortOption(sortByBox.getValue());
+        if ("Descending".equals(sortOrderButton.getText())) {
+            comparator = comparator.reversed();
+        }
+        sorted.sort(comparator);
+        resultsTable.setItems(FXCollections.observableArrayList(sorted));
+    }
+
+    private static Comparator<Equipment> comparatorForSortOption(String sortBy) {
+        Comparator<Equipment> comparator;
+        switch (sortBy) {
+            case "ID":
+                comparator = Comparator.comparing(Equipment::getId, Borrower_controller::compareNatural);
+                break;
+            case "Category":
+                comparator = Comparator.comparing(Equipment::getCategory, String.CASE_INSENSITIVE_ORDER);
+                break;
+            case "Brand":
+                comparator = Comparator.comparing(Equipment::getBrand, String.CASE_INSENSITIVE_ORDER);
+                break;
+            case "Location":
+                comparator = Comparator.comparing(Equipment::getLocation, String.CASE_INSENSITIVE_ORDER);
+                break;
+            case "Available":
+                comparator = Comparator.comparingInt(Equipment::getAvailableQty);
+                break;
+            case "Condition":
+                comparator = Comparator.comparing(Equipment::getCondition, String.CASE_INSENSITIVE_ORDER);
+                break;
+            case "Status":
+                comparator = Comparator.comparing(Equipment::getStatus, String.CASE_INSENSITIVE_ORDER);
+                break;
+            default:
+                comparator = Comparator.comparing(Equipment::getName, String.CASE_INSENSITIVE_ORDER);
+                break;
+        }
+        return comparator
+                .thenComparing(Equipment::getName, String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(Equipment::getId, Borrower_controller::compareNatural);
+    }
+
+    private static int compareNatural(String left, String right) {
+        String leftPrefix = left.replaceAll("\\d+$", "");
+        String rightPrefix = right.replaceAll("\\d+$", "");
+        int prefixComparison = leftPrefix.compareToIgnoreCase(rightPrefix);
+        if (prefixComparison != 0) return prefixComparison;
+
+        java.util.regex.Matcher leftMatch =
+                java.util.regex.Pattern.compile("(\\d+$)").matcher(left);
+        java.util.regex.Matcher rightMatch =
+                java.util.regex.Pattern.compile("(\\d+$)").matcher(right);
+        int leftNumber = leftMatch.find() ? Integer.parseInt(leftMatch.group(1)) : 0;
+        int rightNumber = rightMatch.find() ? Integer.parseInt(rightMatch.group(1)) : 0;
+        int numberComparison = Integer.compare(leftNumber, rightNumber);
+        return numberComparison != 0 ? numberComparison : left.compareToIgnoreCase(right);
+    }
+
+    private static int parseAvailableQty(String value) {
+        try {
+            return Integer.parseInt(value.substring(0, value.indexOf('/')).trim());
+        } catch (RuntimeException ex) {
+            return 0;
+        }
+    }
+
     private void clearRequestForm() {
         requestItems.clear();
         requestItemsBox.getChildren().clear();

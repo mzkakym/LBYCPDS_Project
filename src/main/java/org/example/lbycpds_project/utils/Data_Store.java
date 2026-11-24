@@ -77,18 +77,19 @@ public final class Data_Store {
         try {
             ensureRecordsDirectory();
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-                writer.write("txnNo|requestId|borrowerId|itemId|qty|purpose|activity|requestDate|expectedReturn|status|remarks");
+                writer.write("txnNo|requestId|borrowerId|itemId|qty|purpose|activity|section|requestDate|expectedReturn|status|remarks");
                 writer.newLine();
                 for (BorrowRequest r : allRequests) {
                     writer.write(String.join("|", csv(r.getTxnNo()), csv(r.getRequestId()),
                             csv(r.getBorrowerId()), csv(r.getItemId()), String.valueOf(r.getQty()),
-                            csv(r.getPurpose()), csv(r.getActivity()), r.getRequestDate().toString(),
-                            r.getExpectedReturn().toString(), r.getStatus().name(), csv(r.getRemarks())));
+                            csv(r.getPurpose()), csv(r.getActivity()), csv(r.getSection()),
+                            r.getRequestDate().toString(), r.getExpectedReturn().toString(),
+                            r.getStatus().name(), csv(r.getRemarks())));
                     writer.newLine();
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error saving requests.csv: " + e.getMessage());
+            System.err.println("Error saving requests.txt: " + e.getMessage());
         }
     }
 
@@ -131,7 +132,11 @@ public final class Data_Store {
                 String[] d = line.split("\\|", -1);
                 if (d[0].equalsIgnoreCase("txnNo")) continue;
                 BorrowRequest r;
-                if (d.length == 11) {
+                if (d.length == 12) {
+                    r = new BorrowRequest(d[0], d[1], d[2], d[3], Integer.parseInt(d[4]),
+                            d[5], d[6], d[7], LocalDate.parse(d[8]), LocalDate.parse(d[9]),
+                            BorrowRequest.Status.valueOf(d[10]), d[11]);
+                } else if (d.length == 11) {
                     r = new BorrowRequest(d[0], d[1], d[2], d[3], Integer.parseInt(d[4]),
                             d[5], d[6], LocalDate.parse(d[7]), LocalDate.parse(d[8]),
                             BorrowRequest.Status.valueOf(d[9]), d[10]);

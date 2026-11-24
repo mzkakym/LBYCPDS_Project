@@ -169,6 +169,7 @@ public class Staff_controller {
                 "Transaction No.",
                 "Date & Time Requested",
                 "Borrower ID",
+                "Section",
                 "Equipment ID",
                 "Quantity",
                 "Expected Return",
@@ -182,6 +183,7 @@ public class Staff_controller {
                         request.getTxnNo(),
                         request.getFormattedRequestDateTime(),
                         request.getBorrowerId(),
+                        request.getSection(),
                         request.getItemId(),
                         String.valueOf(request.getQty()),
                         request.getExpectedReturn().toString(),
@@ -202,6 +204,7 @@ public class Staff_controller {
                 "Transaction No.",
                 "Date & Time Requested",
                 "Borrower ID",
+                "Section",
                 "Equipment ID",
                 "Quantity",
                 "Purpose",
@@ -228,6 +231,7 @@ public class Staff_controller {
                             r.getTxnNo(),
                             r.getFormattedRequestDateTime(),
                             r.getBorrowerId(),
+                            r.getSection(),
                             r.getItemId(),
                             String.valueOf(r.getQty()),
                             r.getPurpose(),
@@ -362,6 +366,7 @@ public class Staff_controller {
         TableView<List<String>> table = buildTable(
                 "Transaction No.",
                 "Borrower ID",
+                "Section",
                 "Equipment ID",
                 "Quantity",
                 "Expected Return",
@@ -380,6 +385,7 @@ public class Staff_controller {
                     rows.add(Arrays.asList(
                             r.getTxnNo(),
                             r.getBorrowerId(),
+                            r.getSection(),
                             r.getItemId(),
                             String.valueOf(r.getQty()),
                             r.getExpectedReturn().toString(),
@@ -462,6 +468,7 @@ public class Staff_controller {
         TableView<List<String>> table = buildTable(
                 "Transaction No.",
                 "Borrower ID",
+                "Section",
                 "Equipment ID",
                 "Quantity",
                 "Expected Return",
@@ -487,6 +494,7 @@ public class Staff_controller {
                     rows.add(Arrays.asList(
                             r.getTxnNo(),
                             r.getBorrowerId(),
+                            r.getSection(),
                             r.getItemId(),
                             String.valueOf(r.getQty()),
                             r.getExpectedReturn().toString(),
@@ -582,6 +590,7 @@ public class Staff_controller {
         TableView<List<String>> table = buildTable(
                 "Transaction No.",
                 "Borrower ID",
+                "Section",
                 "Equipment ID",
                 "Quantity",
                 "Expected Return",
@@ -602,6 +611,7 @@ public class Staff_controller {
                 rows.add(Arrays.asList(
                         r.getTxnNo(),
                         r.getBorrowerId(),
+                        r.getSection(),
                         r.getItemId(),
                         String.valueOf(r.getQty()),
                         r.getExpectedReturn().toString(),
@@ -651,6 +661,7 @@ public class Staff_controller {
         TableView<List<String>> reservations = buildTable(
                 "Transaction No.",
                 "Borrower ID",
+                "Section",
                 "Equipment ID",
                 "Quantity",
                 "Expected Return",
@@ -664,6 +675,7 @@ public class Staff_controller {
                 reservationRows.add(Arrays.asList(
                         r.getTxnNo(),
                         r.getBorrowerId(),
+                        r.getSection(),
                         r.getItemId(),
                         String.valueOf(r.getQty()),
                         r.getExpectedReturn().toString(),
