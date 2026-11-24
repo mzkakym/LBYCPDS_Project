@@ -5,26 +5,41 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.text.Font?>
 
-<StackPane prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.lbycpds_project.controllers.Login_controller" stylesheets="@../../css/login.css">
+<StackPane prefHeight="720.0"
+           prefWidth="1280.0"
+           styleClass="login-root"
+           stylesheets="@../../css/login.css"
+           xmlns="http://javafx.com/javafx/25"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="org.example.lbycpds_project.controllers.Login_controller">
 
     <!-- BACKGROUND IMAGE -->
-    <ImageView fx:id="backgroundImage" fitHeight="720.0" fitWidth="1280.0" preserveRatio="false">
+    <ImageView fx:id="backgroundImage"
+               fitHeight="720.0"
+               fitWidth="1280.0"
+               preserveRatio="false">
         <image>
             <Image url="@../../images/Error_View.jpg" />
         </image>
     </ImageView>
 
     <!-- ERROR PAGE CONTENT -->
-    <AnchorPane fx:id="errorPane" prefHeight="720.0" prefWidth="1280.0">
+    <AnchorPane fx:id="errorPane"
+                prefHeight="720.0"
+                prefWidth="1280.0">
 
         <children>
 
-            <Button fx:id="backButton" layoutX="562.0" layoutY="449.0" onAction="#handleBackToLogin" prefHeight="48.0" prefWidth="155.0" text="Back to Login">
-            <font>
-               <Font size="16.0" />
-            </font></Button>
+            <!-- BACK TO LOGIN BUTTON -->
+            <Button fx:id="backButton"
+                    layoutX="791.0"
+                    layoutY="464.0"
+                    onAction="#handleBackToLogin"
+                    prefHeight="48.0"
+                    prefWidth="155.0"
+                    text="Back to Login"
+                    styleClass="login-button"/>
 
         </children>
 

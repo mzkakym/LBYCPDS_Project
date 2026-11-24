@@ -9,40 +9,61 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.StackPane?>
 
-<StackPane prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.lbycpds_project.controllers.Login_controller" stylesheets="@../../css/login.css">
+<StackPane prefHeight="720.0" prefWidth="1280.0" styleClass="login-root" stylesheets="@../../css/login.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.lbycpds_project.controllers.Login_controller">
 
+    <!-- BACKGROUND IMAGE -->
     <ImageView fitHeight="720.0" fitWidth="1280.0" preserveRatio="false">
         <image>
             <Image url="@../../images/Create_Account.jpg" />
         </image>
     </ImageView>
 
+    <!-- CREATE ACCOUNT CONTENT -->
     <AnchorPane prefHeight="720.0" prefWidth="1280.0">
+
         <children>
-         <Label fx:id="accountMessageLabel1" layoutX="442.0" layoutY="250.0" prefHeight="17.0" prefWidth="49.0" text="User ID" textFill="#b5b5b5" />
 
-            <TextField fx:id="accountUserIDField" layoutX="442.0" layoutY="268.0" prefHeight="25.0" prefWidth="180.0" promptText="User ID" />
+            <!-- USER ID -->
+            <Label fx:id="accountMessageLabel1" layoutX="667.0" layoutY="208.0" prefHeight="20.0" prefWidth="72.0" styleClass="login-label" text="User ID" />
 
-            <TextField fx:id="accountFullNameField" layoutX="652.0" layoutY="268.0" prefHeight="25.0" prefWidth="180.0" promptText="Full Name" />
+            <TextField fx:id="accountUserIDField" layoutX="667.0" layoutY="227.0" prefHeight="25.0" prefWidth="180.0" promptText="User ID" styleClass="login-field" />
 
-            <TextField fx:id="accountDepartmentField" layoutX="442.0" layoutY="323.0" prefHeight="25.0" prefWidth="180.0" promptText="Department" />
+            <!-- FULL NAME -->
+            <Label fx:id="accountMessageLabel11" layoutX="877.0" layoutY="208.0" prefHeight="20.0" prefWidth="110.0" styleClass="login-label" text="Full Name" />
 
-            <TextField fx:id="accountContactField" layoutX="652.0" layoutY="323.0" prefHeight="25.0" prefWidth="180.0" promptText="Email Adress" />
+            <TextField fx:id="accountFullNameField" layoutX="877.0" layoutY="227.0" prefHeight="25.0" prefWidth="180.0" promptText="Full Name" styleClass="login-field" />
 
-            <PasswordField fx:id="accountPasswordField" layoutX="442.0" layoutY="371.0" prefHeight="25.0" prefWidth="390.0" promptText="Password" />
+            <!-- DEPARTMENT -->
+            <Label fx:id="accountMessageLabel12" layoutX="667.0" layoutY="277.0" prefHeight="20.0" prefWidth="180.0" styleClass="login-label" text="Program Department" />
 
-            <PasswordField fx:id="accountConfirmPasswordField" layoutX="442.0" layoutY="404.0" prefHeight="25.0" prefWidth="390.0" promptText="Confirm Password" />
+            <TextField fx:id="accountDepartmentField" layoutX="667.0" layoutY="299.0" prefHeight="25.0" prefWidth="180.0" promptText="Department" styleClass="login-field" />
 
-            <Label fx:id="accountMessageLabel" alignment="CENTER" contentDisplay="CENTER" layoutX="451.0" layoutY="433.0" prefWidth="380.0" text="" textFill="#f83d3d" />
+            <!-- EMAIL ADDRESS -->
+            <Label fx:id="accountMessageLabel121" layoutX="877.0" layoutY="277.0" prefHeight="17.0" prefWidth="123.0" styleClass="login-label" text="Email Address" />
 
-            <Button fx:id="createAccountButton" layoutX="541.0" layoutY="455.0" onAction="#handleRegisterAccount" prefWidth="180.0" text="Create Account" />
+            <TextField fx:id="accountContactField" layoutX="877.0" layoutY="299.0" prefHeight="25.0" prefWidth="180.0" promptText="Email Address" styleClass="login-field" />
 
-            <Button fx:id="accountBackButton" layoutX="541.0" layoutY="492.0" onAction="#handleBackToLogin" prefWidth="180.0" text="Back to Login" />
-         <Label fx:id="accountMessageLabel11" layoutX="652.0" layoutY="250.0" prefHeight="17.0" prefWidth="72.0" text="Full Name" textFill="#b5b5b5" />
-         <Label fx:id="accountMessageLabel12" layoutX="442.0" layoutY="302.0" prefHeight="17.0" prefWidth="123.0" text="Program Department" textFill="#b5b5b5" />
-         <Label fx:id="accountMessageLabel121" layoutX="652.0" layoutY="302.0" prefHeight="17.0" prefWidth="123.0" text="Email Adress" textFill="#b5b5b5" />
-         <Label fx:id="accountMessageLabel111" layoutX="443.0" layoutY="352.0" prefHeight="17.0" prefWidth="72.0" text="Password" textFill="#b5b5b5" />
+            <!-- PASSWORD -->
+            <Label fx:id="accountMessageLabel111" layoutX="668.0" layoutY="344.0" prefHeight="20.0" prefWidth="133.0" styleClass="login-label" text="Password" />
+
+            <PasswordField fx:id="accountPasswordField" layoutX="667.0" layoutY="364.0" prefHeight="25.0" prefWidth="390.0" promptText="Password" styleClass="login-field" />
+
+            <!-- CONFIRM PASSWORD -->
+            <Label fx:id="accountMessageLabel1111" layoutX="668.0" layoutY="407.0" prefHeight="20.0" prefWidth="157.0" styleClass="login-label" text="Confirm Password" />
+
+            <PasswordField fx:id="accountConfirmPasswordField" layoutX="667.0" layoutY="427.0" prefHeight="25.0" prefWidth="390.0" promptText="Confirm Password" styleClass="login-field" />
+
+            <!-- ERROR MESSAGE -->
+            <Label fx:id="accountMessageLabel" alignment="CENTER" contentDisplay="CENTER" layoutX="672.0" layoutY="474.0" prefWidth="380.0" styleClass="error-label" text="" />
+
+            <!-- CREATE ACCOUNT BUTTON -->
+            <Button fx:id="createAccountButton" layoutX="668.0" layoutY="503.0" onAction="#handleRegisterAccount" prefHeight="45.0" prefWidth="325.0" styleClass="login-button" text="Create Account" />
+
+            <!-- BACK TO LOGIN BUTTON -->
+            <Button fx:id="accountBackButton" layoutX="666.0" layoutY="557.0" onAction="#handleBackToLogin" prefHeight="27.0" prefWidth="325.0" styleClass="secondary-button" text="Back to Login" />
 
         </children>
+
     </AnchorPane>
+
 </StackPane>
